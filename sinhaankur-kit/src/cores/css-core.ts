@@ -84,8 +84,22 @@ export interface FigmaNode {
   lineHeight?: number;
   letterSpacing?: number;
   // image
-  imageBytes?: Uint8Array;
+  imageBytes?: number[];        // PNG bytes (as array — postMessage-safe)
+  // effect
+  shadow?: Shadow | null;
   children?: FigmaNode[];
+}
+
+export interface Shadow { x: number; y: number; blur: number; spread: number; color: RGBA; }
+
+/** Parse a CSS box-shadow (first shadow only) → Figma drop-shadow values. */
+export function parseBoxShadow(css: string): Shadow | null {
+  if (!css || css === "none") return null;
+  const color = parseColor(css) || { r: 0, g: 0, b: 0, a: 0.25 };
+  const nums = css.match(/-?[\d.]+px/g);
+  if (!nums || nums.length < 2) return null;
+  const v = nums.map((n) => parseFloat(n));
+  return { x: v[0], y: v[1], blur: v[2] || 0, spread: v[3] || 0, color };
 }
 
 /** Should this element become a visible Figma layer at all? (skip empty/hidden) */

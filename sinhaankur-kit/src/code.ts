@@ -179,8 +179,27 @@ async function htmlImport(tree: FigmaNode) {
   page.fills = tree.fill ? [solid(tree.fill)] : []; page.clipsContent = true;
   const ox = page.x, oy = page.y;
   const add = async (n: FigmaNode) => {
-    if (n.kind === "text" && n.text) { const f = await font(n.fontFamily || "Inter", n.fontStyle || "Regular"); const t = figma.createText(); t.fontName = f; t.characters = n.text; t.fontSize = Math.max(1, n.fontSize || 16); t.x = ox + n.x; t.y = oy + n.y; if (n.color) t.fills = [solid(n.color)]; page.appendChild(t); }
-    else { const r = figma.createRectangle(); r.x = ox + n.x; r.y = oy + n.y; r.resize(Math.max(1, n.w), Math.max(1, n.h)); r.fills = n.fill ? [solid(n.fill)] : []; if (n.stroke && n.strokeWidth) { r.strokes = [solid(n.stroke)]; r.strokeWeight = n.strokeWidth; } if (n.radius) r.cornerRadius = n.radius; page.appendChild(r); }
+    if (n.kind === "text" && n.text) {
+      const f = await font(n.fontFamily || "Inter", n.fontStyle || "Regular");
+      const t = figma.createText(); t.fontName = f; t.characters = n.text; t.fontSize = Math.max(1, n.fontSize || 16);
+      t.x = ox + n.x; t.y = oy + n.y; if (n.color) t.fills = [solid(n.color)]; page.appendChild(t);
+    } else if (n.imageBytes && n.imageBytes.length) {
+      // real image import (from the reference approach)
+      const img = figma.createImage(new Uint8Array(n.imageBytes));
+      const r = figma.createRectangle(); r.x = ox + n.x; r.y = oy + n.y; r.resize(Math.max(1, n.w), Math.max(1, n.h));
+      r.fills = [{ type: "IMAGE", scaleMode: "FILL", imageHash: img.hash }];
+      if (n.radius) r.cornerRadius = n.radius; r.name = "image"; page.appendChild(r);
+    } else {
+      const r = figma.createRectangle(); r.x = ox + n.x; r.y = oy + n.y; r.resize(Math.max(1, n.w), Math.max(1, n.h));
+      r.fills = n.fill ? [solid(n.fill)] : [];
+      if (n.stroke && n.strokeWidth) { r.strokes = [solid(n.stroke)]; r.strokeWeight = n.strokeWidth; }
+      if (n.radius) r.cornerRadius = n.radius;
+      if (n.opacity != null && n.opacity < 1) r.opacity = n.opacity;
+      if (n.shadow) r.effects = [{ type: "DROP_SHADOW", visible: true, blendMode: "NORMAL",
+        color: { r: n.shadow.color.r, g: n.shadow.color.g, b: n.shadow.color.b, a: n.shadow.color.a },
+        offset: { x: n.shadow.x, y: n.shadow.y }, radius: n.shadow.blur, spread: n.shadow.spread }];
+      page.appendChild(r);
+    }
     if (n.children) for (const c of n.children) await add(c);
   };
   for (const c of tree.children || []) await add(c);

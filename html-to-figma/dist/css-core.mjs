@@ -56,6 +56,14 @@ function textAlign(css) {
       return "LEFT";
   }
 }
+function parseBoxShadow(css) {
+  if (!css || css === "none") return null;
+  const color = parseColor(css) || { r: 0, g: 0, b: 0, a: 0.25 };
+  const nums = css.match(/-?[\d.]+px/g);
+  if (!nums || nums.length < 2) return null;
+  const v = nums.map((n) => parseFloat(n));
+  return { x: v[0], y: v[1], blur: v[2] || 0, spread: v[3] || 0, color };
+}
 function isRenderable(style) {
   if (style.display === "none" || style.visibility === "hidden") return false;
   if (parseFloat(style.opacity) === 0) return false;
@@ -69,6 +77,7 @@ export {
   fontStyleName,
   hasVisibleBox,
   isRenderable,
+  parseBoxShadow,
   parseColor,
   parseRadius,
   px,

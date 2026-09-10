@@ -38,5 +38,11 @@ t("visible box → renderable", () => assert.strictEqual(isRenderable({ display:
 t("hasVisibleBox: bg only", () => assert.strictEqual(hasVisibleBox({ r: 1, g: 1, b: 1, a: 1 }, null, 0), true));
 t("hasVisibleBox: nothing", () => assert.strictEqual(hasVisibleBox(null, null, 0), false));
 
+// box-shadow
+const { parseBoxShadow } = c;
+console.log("box-shadow:");
+t("parses offsets+blur", () => { const sh = parseBoxShadow("rgba(0,0,0,0.25) 0px 4px 12px 0px"); assert.strictEqual(sh.y, 4); assert.strictEqual(sh.blur, 12); });
+t("none → null", () => assert.strictEqual(parseBoxShadow("none"), null));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

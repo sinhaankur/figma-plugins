@@ -2,7 +2,7 @@
 // © Ankur Sinha.
 
 import {
-  parseColor, px, parseRadius, fontStyleName, textAlign, isRenderable, hasVisibleBox, type FigmaNode,
+  parseColor, px, parseRadius, fontStyleName, textAlign, isRenderable, hasVisibleBox, parseBoxShadow, type FigmaNode,
 } from "./cores/css-core";
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -66,22 +66,38 @@ async function runHtml() {
   await new Promise((r) => setTimeout(r, 350)); try { await (doc as any).fonts?.ready; } catch {}
   const body = doc.body;
   const tree: FigmaNode = { kind: "frame", name: "Imported page", x: 0, y: 0, w: width, h: Math.max(body.scrollHeight, 1), fill: parseColor(getComputedStyle(body).backgroundColor) || { r: 1, g: 1, b: 1, a: 1 }, children: [] };
-  const out: FigmaNode[] = []; walk(body, doc, out); tree.children = out;
+  const out: FigmaNode[] = []; await walk(body, doc, out); tree.children = out;
   el("hStatus").textContent = "Building…"; post({ type: "html-import", tree });
 }
 function absolutize(html: string, base: string) { try { const b = new URL(base); return html.replace(/(src|href)=["'](?!https?:|data:|#)([^"']+)["']/gi, (_m, a, p) => `${a}="${new URL(p, b).href}"`); } catch { return html; } }
-function walk(node: Element, doc: Document, out: FigmaNode[]) {
+async function walk(node: Element, doc: Document, out: FigmaNode[]) {
   for (const child of Array.from(node.children)) {
     const s = getComputedStyle(child); const rect = child.getBoundingClientRect(); const win = doc.defaultView!;
     const x = rect.left + win.scrollX, y = rect.top + win.scrollY, w = rect.width, h = rect.height;
     if (!isRenderable({ display: s.display, visibility: s.visibility, opacity: s.opacity, width: w, height: h })) continue;
     const bg = parseColor(s.backgroundColor), border = parseColor(s.borderTopColor), bw = px(s.borderTopWidth), radius = parseRadius(s.borderTopLeftRadius);
+    const shadow = parseBoxShadow(s.boxShadow);
     const tag = child.tagName.toLowerCase();
-    if (hasVisibleBox(bg, bw > 0 ? border : null, radius)) out.push({ kind: "rect", name: tag, x, y, w, h, fill: bg, stroke: bw > 0 ? border : null, strokeWidth: bw, radius, opacity: parseFloat(s.opacity) });
+    // images → capture bytes via canvas (same-origin / crossorigin-anonymous only)
+    if (tag === "img") {
+      const bytes = await imageBytes(child as HTMLImageElement, w, h);
+      if (bytes) { out.push({ kind: "image", name: "img", x, y, w, h, radius, imageBytes: bytes }); continue; }
+    }
+    if (hasVisibleBox(bg, bw > 0 ? border : null, radius) || shadow) out.push({ kind: "rect", name: tag, x, y, w, h, fill: bg, stroke: bw > 0 ? border : null, strokeWidth: bw, radius, opacity: parseFloat(s.opacity), shadow });
     const txt = directText(child);
     if (txt) out.push({ kind: "text", name: txt.slice(0, 40), x, y, w, h, text: txt, fontSize: px(s.fontSize) || 16, fontFamily: (s.fontFamily.split(",")[0] || "Inter").replace(/["']/g, "").trim(), fontStyle: fontStyleName(s.fontWeight, s.fontStyle === "italic"), color: parseColor(s.color), align: textAlign(s.textAlign) });
-    walk(child, doc, out);
+    await walk(child, doc, out);
   }
+}
+// Draw an <img> to a canvas and read PNG bytes. Returns null if tainted (CORS).
+async function imageBytes(img: HTMLImageElement, w: number, h: number): Promise<number[] | null> {
+  try {
+    if (!img.complete || !img.naturalWidth) return null;
+    const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h));
+    const ctx = c.getContext("2d")!; ctx.drawImage(img, 0, 0, c.width, c.height);
+    const blob: Blob = await new Promise((res) => c.toBlob((b) => res(b!), "image/png"));
+    return Array.from(new Uint8Array(await blob.arrayBuffer()));
+  } catch { return null; } // tainted canvas (cross-origin without CORS)
 }
 function directText(e: Element) { let s = ""; for (const n of Array.from(e.childNodes)) if (n.nodeType === 3) s += n.textContent || ""; return s.replace(/\s+/g, " ").trim(); }
 
