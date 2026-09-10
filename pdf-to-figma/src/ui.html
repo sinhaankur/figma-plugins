@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --bg: #0e0f13; --card: #16181f; --fg: #f3f4f6; --muted: #9aa0aa;
+    --accent: #f43f5e; --line: rgba(255,255,255,0.1);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: Inter, -apple-system, system-ui, sans-serif;
+    background: var(--bg); color: var(--fg); font-size: 13px;
+  }
+  .wrap { padding: 16px; }
+  h1 { font-size: 15px; margin: 0 0 2px; }
+  .sub { color: var(--muted); font-size: 12px; margin: 0 0 14px; }
+  .drop {
+    border: 1.5px dashed var(--line); border-radius: 14px; padding: 26px 16px;
+    text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+    background: var(--card);
+  }
+  .drop.hover { border-color: var(--accent); background: rgba(244,63,94,0.06); }
+  .drop b { color: var(--fg); }
+  .drop span { color: var(--muted); display:block; margin-top:4px; font-size:12px; }
+  input[type=file] { display: none; }
+  .opts { margin: 14px 0; display: grid; gap: 8px; }
+  .opt { display: flex; align-items: center; gap: 8px; color: var(--fg); }
+  .opt input { accent-color: var(--accent); }
+  .file { margin: 12px 0; padding: 10px 12px; background: var(--card); border-radius: 10px; display:none; }
+  .file.show { display:flex; justify-content:space-between; align-items:center; }
+  .file .n { font-weight: 600; }
+  .file .m { color: var(--muted); font-size: 11px; }
+  .row { display: flex; gap: 8px; margin-top: 6px; }
+  button {
+    flex: 1; border: 0; border-radius: 10px; padding: 11px; font-weight: 700;
+    font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .primary { background: var(--accent); color: #fff; }
+  .primary:disabled { opacity: .4; cursor: default; }
+  .ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .bar { height: 6px; background: rgba(255,255,255,.08); border-radius: 4px; overflow: hidden; margin-top: 12px; display:none; }
+  .bar.show { display:block; }
+  .bar > i { display:block; height:100%; width:0; background: var(--accent); transition: width .2s; }
+  .status { color: var(--muted); font-size: 11px; margin-top: 6px; min-height: 14px; }
+  .note { color: var(--muted); font-size: 11px; margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PDF → Figma</h1>
+  <p class="sub">Import a PDF as editable frames. On-device — nothing leaves Figma.</p>
+
+  <label class="drop" id="drop">
+    <b>Drop a PDF here</b>
+    <span>or click to choose · up to ~50 pages</span>
+    <input type="file" id="file" accept="application/pdf,.pdf" />
+  </label>
+
+  <div class="file" id="fileInfo">
+    <div><div class="n" id="fname">—</div><div class="m" id="fmeta"></div></div>
+    <button class="ghost" id="clear" style="flex:0 0 auto;padding:6px 10px;">Clear</button>
+  </div>
+
+  <div class="opts">
+    <label class="opt"><input type="checkbox" id="optImage" checked /> Place page image (exact look)</label>
+    <label class="opt"><input type="checkbox" id="optText" checked /> Extract editable text</label>
+  </div>
+
+  <div class="row">
+    <button class="ghost" id="cancel">Close</button>
+    <button class="primary" id="go" disabled>Import to Figma</button>
+  </div>
+
+  <div class="bar" id="bar"><i id="fill"></i></div>
+  <div class="status" id="status"></div>
+
+  <p class="note">Text sits on top of the page image and is fully editable. Turn off the image for a text-only, vector-first import. Powered by a bundled pdf.js — no network.</p>
+</div>
+
+<!-- pdf.js is inlined at build time into pdfjs.js; the worker is inlined too. -->
+<script src="pdfjs.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
