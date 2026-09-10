@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0c10"/><stop offset="1" stop-color="#1b1016"/></linearGradient>
+<linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb7185"/><stop offset="1" stop-color="#e11d48"/></linearGradient>
+<radialGradient id="gl" cx="0.2" cy="0.3" r="0.7"><stop offset="0" stop-color="#f43f5e" stop-opacity="0.25"/><stop offset="1" stop-color="#f43f5e" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1500" height="500" fill="url(#bg)"/><rect width="1500" height="500" fill="url(#gl)"/>
+<g transform="translate(90,160)"><rect width="180" height="180" rx="42" fill="url(#r)"/>
+<path d="M66 62 L42 90 L66 118" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M114 62 L138 90 L114 118" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+<rect x="78" y="80" width="24" height="9" rx="3" fill="#fff"/><rect x="78" y="96" width="24" height="9" rx="3" fill="#fff" opacity="0.8"/></g>
+<text x="320" y="220" font-family="Georgia,serif" font-size="72" font-weight="700" fill="#f3f4f6">Ankur Sinha</text>
+<text x="322" y="278" font-family="Arial,sans-serif" font-size="30" fill="#9aa0aa">Design engineer · on-device tools for design + code</text>
+<text x="322" y="330" font-family="Arial,sans-serif" font-size="28" fill="#fb7185">sinhaankur.com · free &amp; open source</text>
+</svg>
