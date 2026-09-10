@@ -11,8 +11,11 @@ they run entirely inside Figma, no network, nothing leaves your machine.
 | [Style & A11y Auditor](./style-auditor) | Flag hardcoded colors, detached instances, off-scale spacing, low contrast (WCAG), small tap targets — click to jump to the node | ✅ built (17 tests) |
 | [Design Tokens Sync](./tokens-sync) | Figma styles ⇄ W3C design tokens JSON + CSS variables; export and re-apply | ✅ built (19 tests) |
 | [Content Filler](./content-filler) | Replace lorem ipsum with realistic on-device data — auto-detects field type from layer names | ✅ built (18 tests) |
+| [HTML → Figma](./html-to-figma) | A live URL or pasted HTML → real editable Figma layers (computed CSS → frames/text/fills) | ✅ built (22 tests) |
 | Component Library Manager | Scan for reusable pieces, promote to components, tidy naming, keep the system coherent | ⏳ planned |
 | Figma → clean code | Export a frame as production HTML/CSS or React + Tailwind | ⏳ planned |
+
+**Launching:** see [LAUNCH.md](./LAUNCH.md) — free, open-source, published to the Figma Community from the desktop app.
 | Real content filler | Replace lorem ipsum with realistic on-device data (names, prices, dates) | ⏳ planned |
 
 ## Build any plugin

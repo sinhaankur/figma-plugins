@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><style>
+:root{
+  --bg:#0e0f13;--card:#16181f;--card2:#1c1f28;--fg:#f3f4f6;--muted:#9aa0aa;
+  --accent:#f43f5e;--accent2:#fb7185;--line:rgba(255,255,255,.09);--ok:#34d399;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--fg);font-size:13px}
+.wrap{padding:16px}
+.brand{display:flex;align-items:center;gap:9px;margin-bottom:2px}
+.mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;box-shadow:0 2px 8px rgba(244,63,94,.35)}
+.brand h1{font-size:15px;margin:0;letter-spacing:-.01em}
+.brand .by{margin-left:auto;font-size:10px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
+.sub{color:var(--muted);font-size:12px;margin:6px 0 14px;line-height:1.5}
+.tabs{display:flex;gap:4px;background:var(--card);border-radius:9px;padding:3px;margin-bottom:12px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:8px;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit;font-size:12px;transition:.12s}
+.tabs button.on{background:var(--accent);color:#fff}
+label{font-size:11px;color:var(--muted);display:block;margin:0 0 5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+textarea,input[type=text]{width:100%;background:#0b0c10;border:1px solid var(--line);border-radius:9px;color:var(--fg);padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:11px;transition:border-color .12s}
+textarea{height:200px;resize:vertical}
+textarea:focus,input:focus{outline:0;border-color:var(--accent)}
+.hidden{display:none}
+.field{margin-bottom:12px}
+.opts{display:flex;gap:10px;align-items:center;margin:4px 0 14px;flex-wrap:wrap}
+.w{display:flex;align-items:center;gap:6px}
+.w input{width:74px;font-family:inherit;text-align:center}
+.pills{display:flex;gap:6px}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer}
+.pill.on{border-color:var(--accent);color:var(--fg)}
+.go{width:100%;border:0;border-radius:11px;padding:13px;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 14px rgba(244,63,94,.25);transition:.12s}
+.go:hover{filter:brightness(1.07)} .go:active{transform:translateY(1px)}
+.status{color:var(--muted);font-size:11px;min-height:16px;margin-top:10px;text-align:center}
+.status.ok{color:var(--ok)}
+.note{color:var(--muted);font-size:11px;margin-top:14px;line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+.note b{color:var(--fg)}
+iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;border:0;pointer-events:none;opacity:0}
+</style></head><body>
+<div class="wrap">
+  <div class="brand">
+    <div class="mark">H</div>
+    <h1>HTML → Figma</h1>
+    <span class="by">sinhaankur</span>
+  </div>
+  <p class="sub">Turn a live URL or pasted HTML into <b style="color:var(--fg)">editable</b> Figma layers — real frames, text and fills from the computed CSS. Runs on your device.</p>
+
+  <div class="tabs"><button id="tabHtml" class="on">Paste HTML</button><button id="tabUrl">From URL</button></div>
+
+  <div id="htmlPane" class="field">
+    <label>HTML</label>
+    <textarea id="html" placeholder="Paste a page's HTML (Cmd-A, Cmd-C in the browser's Elements panel, or full page source)…"></textarea>
+  </div>
+  <div id="urlPane" class="field hidden">
+    <label>URL</label>
+    <input type="text" id="url" placeholder="https://sinhaankur.com" />
+    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Some sites block cross-origin fetch — if it fails, switch to Paste HTML.</p>
+  </div>
+
+  <div class="opts">
+    <div class="w"><label style="margin:0">Width</label><input type="text" id="width" value="1056" /></div>
+    <div class="pills">
+      <span class="pill" data-w="390">390</span>
+      <span class="pill on" data-w="1056">1056</span>
+      <span class="pill" data-w="1440">1440</span>
+    </div>
+  </div>
+
+  <button class="go" id="go">Import to Figma</button>
+  <div class="status" id="status"></div>
+
+  <p class="note"><b>Editable, not a screenshot.</b> Each element becomes a real Figma layer positioned from its on-page box. Complex effects (gradients, canvas, shadows) may simplify. Free &amp; open source — by <b>sinhaankur</b>.</p>
+</div>
+<iframe id="stage" sandbox="allow-same-origin"></iframe>
+<script src="ui.js"></script>
+</body></html>

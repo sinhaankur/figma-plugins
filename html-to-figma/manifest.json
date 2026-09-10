@@ -1,0 +1,13 @@
+{
+  "name": "HTML to Figma — by sinhaankur",
+  "id": "sinhaankur-html-to-figma",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Optional: when you import 'From URL', the plugin fetches that page's HTML in the UI to render it. Pasted-HTML mode uses no network."
+  },
+  "permissions": []
+}

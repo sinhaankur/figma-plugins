@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><style>
+:root{
+  --bg:#0e0f13;--card:#16181f;--card2:#1c1f28;--fg:#f3f4f6;--muted:#9aa0aa;
+  --accent:#f43f5e;--accent2:#fb7185;--line:rgba(255,255,255,.09);--ok:#34d399;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--fg);font-size:13px}
+.wrap{padding:16px}
+.brand{display:flex;align-items:center;gap:9px;margin-bottom:2px}
+.mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;box-shadow:0 2px 8px rgba(244,63,94,.35)}
+.brand h1{font-size:15px;margin:0;letter-spacing:-.01em}
+.brand .by{margin-left:auto;font-size:10px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
+.sub{color:var(--muted);font-size:12px;margin:6px 0 14px;line-height:1.5}
+.tabs{display:flex;gap:4px;background:var(--card);border-radius:9px;padding:3px;margin-bottom:12px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:8px;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit;font-size:12px;transition:.12s}
+.tabs button.on{background:var(--accent);color:#fff}
+label{font-size:11px;color:var(--muted);display:block;margin:0 0 5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+textarea,input[type=text]{width:100%;background:#0b0c10;border:1px solid var(--line);border-radius:9px;color:var(--fg);padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:11px;transition:border-color .12s}
+textarea{height:200px;resize:vertical}
+textarea:focus,input:focus{outline:0;border-color:var(--accent)}
+.hidden{display:none}
+.field{margin-bottom:12px}
+.opts{display:flex;gap:10px;align-items:center;margin:4px 0 14px;flex-wrap:wrap}
+.w{display:flex;align-items:center;gap:6px}
+.w input{width:74px;font-family:inherit;text-align:center}
+.pills{display:flex;gap:6px}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer}
+.pill.on{border-color:var(--accent);color:var(--fg)}
+.go{width:100%;border:0;border-radius:11px;padding:13px;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 14px rgba(244,63,94,.25);transition:.12s}
+.go:hover{filter:brightness(1.07)} .go:active{transform:translateY(1px)}
+.status{color:var(--muted);font-size:11px;min-height:16px;margin-top:10px;text-align:center}
+.status.ok{color:var(--ok)}
+.note{color:var(--muted);font-size:11px;margin-top:14px;line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+.note b{color:var(--fg)}
+iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;border:0;pointer-events:none;opacity:0}
+</style></head><body>
+<div class="wrap">
+  <div class="brand">
+    <div class="mark">H</div>
+    <h1>HTML → Figma</h1>
+    <span class="by">sinhaankur</span>
+  </div>
+  <p class="sub">Turn a live URL or pasted HTML into <b style="color:var(--fg)">editable</b> Figma layers — real frames, text and fills from the computed CSS. Runs on your device.</p>
+
+  <div class="tabs"><button id="tabHtml" class="on">Paste HTML</button><button id="tabUrl">From URL</button></div>
+
+  <div id="htmlPane" class="field">
+    <label>HTML</label>
+    <textarea id="html" placeholder="Paste a page's HTML (Cmd-A, Cmd-C in the browser's Elements panel, or full page source)…"></textarea>
+  </div>
+  <div id="urlPane" class="field hidden">
+    <label>URL</label>
+    <input type="text" id="url" placeholder="https://sinhaankur.com" />
+    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Some sites block cross-origin fetch — if it fails, switch to Paste HTML.</p>
+  </div>
+
+  <div class="opts">
+    <div class="w"><label style="margin:0">Width</label><input type="text" id="width" value="1056" /></div>
+    <div class="pills">
+      <span class="pill" data-w="390">390</span>
+      <span class="pill on" data-w="1056">1056</span>
+      <span class="pill" data-w="1440">1440</span>
+    </div>
+  </div>
+
+  <button class="go" id="go">Import to Figma</button>
+  <div class="status" id="status"></div>
+
+  <p class="note"><b>Editable, not a screenshot.</b> Each element becomes a real Figma layer positioned from its on-page box. Complex effects (gradients, canvas, shadows) may simplify. Free &amp; open source — by <b>sinhaankur</b>.</p>
+</div>
+<iframe id="stage" sandbox="allow-same-origin"></iframe>
+<script>"use strict";
+(() => {
+  // src/css-core.ts
+  function parseColor(css) {
+    if (!css) return null;
+    const s = css.trim().toLowerCase();
+    if (s === "transparent" || s === "none") return null;
+    let m = s.match(/^rgba?\(([^)]+)\)$/);
+    if (m) {
+      const parts = m[1].split(/[,\/\s]+/).filter(Boolean);
+      const r = num(parts[0]) / 255, g = num(parts[1]) / 255, b = num(parts[2]) / 255;
+      const a = parts[3] != null ? clamp01(num(parts[3])) : 1;
+      if (a === 0) return null;
+      return { r: clamp01(r), g: clamp01(g), b: clamp01(b), a };
+    }
+    m = s.match(/^#([0-9a-f]{3,8})$/);
+    if (m) {
+      const h = m[1];
+      const to = (i, len) => parseInt(len === 1 ? h[i] + h[i] : h.slice(i, i + 2), 16) / 255;
+      if (h.length === 3) return { r: to(0, 1), g: to(1, 1), b: to(2, 1), a: 1 };
+      if (h.length === 6) return { r: to(0, 2), g: to(2, 2), b: to(4, 2), a: 1 };
+      if (h.length === 8) {
+        const a = to(6, 2);
+        return a === 0 ? null : { r: to(0, 2), g: to(2, 2), b: to(4, 2), a };
+      }
+    }
+    return null;
+  }
+  function num(s) {
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function clamp01(n) {
+    return Math.max(0, Math.min(1, n));
+  }
+  function px(v) {
+    return num(String(v).replace("px", ""));
+  }
+  function parseRadius(css) {
+    const first = px((css || "0").split(/\s+/)[0]);
+    return Math.max(0, first);
+  }
+  function fontStyleName(weight, italic) {
+    const w = parseInt(weight, 10) || 400;
+    const base = w >= 800 ? "Black" : w >= 700 ? "Bold" : w >= 600 ? "SemiBold" : w >= 500 ? "Medium" : w <= 300 ? "Light" : "Regular";
+    if (italic) return base === "Regular" ? "Italic" : `${base} Italic`;
+    return base;
+  }
+  function textAlign(css) {
+    switch ((css || "").toLowerCase()) {
+      case "center":
+        return "CENTER";
+      case "right":
+      case "end":
+        return "RIGHT";
+      case "justify":
+        return "JUSTIFIED";
+      default:
+        return "LEFT";
+    }
+  }
+  function isRenderable(style) {
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    if (parseFloat(style.opacity) === 0) return false;
+    if (style.width <= 0 || style.height <= 0) return false;
+    return true;
+  }
+  function hasVisibleBox(bg, border, radius) {
+    return !!bg || !!border || radius > 0;
+  }
+
+  // src/ui.ts
+  var el = (id) => document.getElementById(id);
+  var stage = el("stage");
+  var status = el("status");
+  var mode = "html";
+  el("tabHtml").addEventListener("click", () => setMode("html"));
+  el("tabUrl").addEventListener("click", () => setMode("url"));
+  function setMode(m) {
+    mode = m;
+    el("tabHtml").classList.toggle("on", m === "html");
+    el("tabUrl").classList.toggle("on", m === "url");
+    el("htmlPane").classList.toggle("hidden", m !== "html");
+    el("urlPane").classList.toggle("hidden", m !== "url");
+  }
+  document.querySelectorAll(".pill").forEach((pill) => pill.addEventListener("click", () => {
+    document.querySelectorAll(".pill").forEach((p) => p.classList.remove("on"));
+    pill.classList.add("on");
+    el("width").value = pill.dataset.w;
+  }));
+  el("go").addEventListener("click", run);
+  async function run() {
+    let html = "";
+    if (mode === "html") {
+      html = el("html").value.trim();
+      if (!html) {
+        status.textContent = "Paste some HTML first.";
+        return;
+      }
+    } else {
+      const url = el("url").value.trim();
+      if (!url) {
+        status.textContent = "Enter a URL.";
+        return;
+      }
+      status.textContent = "Fetching page\u2026";
+      try {
+        const res = await fetch(url, { mode: "cors" });
+        html = await res.text();
+        html = absolutize(html, url);
+      } catch (e) {
+        status.textContent = "Couldn't fetch (CORS?). Paste the HTML instead.";
+        return;
+      }
+    }
+    status.textContent = "Rendering\u2026";
+    const width = px(el("width").value || "1056") || 1056;
+    await renderAndWalk(html, width);
+  }
+  function absolutize(html, base) {
+    try {
+      const b = new URL(base);
+      return html.replace(
+        /(src|href)=["'](?!https?:|data:|#)([^"']+)["']/gi,
+        (_m, attr, path) => `${attr}="${new URL(path, b).href}"`
+      );
+    } catch {
+      return html;
+    }
+  }
+  async function renderAndWalk(html, width) {
+    const doc = stage.contentDocument;
+    stage.style.width = width + "px";
+    doc.open();
+    doc.write(html);
+    doc.close();
+    await new Promise((r) => setTimeout(r, 350));
+    try {
+      await doc.fonts?.ready;
+    } catch {
+    }
+    const body = doc.body;
+    const root = {
+      kind: "frame",
+      name: "Imported page",
+      x: 0,
+      y: 0,
+      w: width,
+      h: Math.max(body.scrollHeight, 1),
+      fill: parseColor(getComputedStyle(body).backgroundColor) || { r: 1, g: 1, b: 1, a: 1 },
+      children: []
+    };
+    const nodes = [];
+    walk(body, doc, nodes);
+    root.children = nodes;
+    status.textContent = "Building Figma layers\u2026";
+    parent.postMessage({ pluginMessage: { type: "import", tree: root } }, "*");
+  }
+  function walk(node, doc, out) {
+    for (const child of Array.from(node.children)) {
+      const style = getComputedStyle(child);
+      const rect = child.getBoundingClientRect();
+      const win = doc.defaultView;
+      const x = rect.left + win.scrollX, y = rect.top + win.scrollY;
+      const w = rect.width, h = rect.height;
+      if (!isRenderable({ display: style.display, visibility: style.visibility, opacity: style.opacity, width: w, height: h })) {
+        continue;
+      }
+      const bg = parseColor(style.backgroundColor);
+      const border = parseColor(style.borderTopColor);
+      const bw = px(style.borderTopWidth);
+      const radius = parseRadius(style.borderTopLeftRadius);
+      const tag = child.tagName.toLowerCase();
+      if (hasVisibleBox(bg, bw > 0 ? border : null, radius)) {
+        out.push({
+          kind: "rect",
+          name: tag + (child.id ? "#" + child.id : ""),
+          x,
+          y,
+          w,
+          h,
+          fill: bg,
+          stroke: bw > 0 ? border : null,
+          strokeWidth: bw,
+          radius,
+          opacity: parseFloat(style.opacity)
+        });
+      }
+      const ownText = directText(child);
+      if (ownText) {
+        out.push({
+          kind: "text",
+          name: ownText.slice(0, 40),
+          x,
+          y,
+          w,
+          h,
+          text: ownText,
+          fontSize: px(style.fontSize) || 16,
+          fontFamily: (style.fontFamily.split(",")[0] || "Inter").replace(/["']/g, "").trim(),
+          fontStyle: fontStyleName(style.fontWeight, style.fontStyle === "italic"),
+          color: parseColor(style.color),
+          align: textAlign(style.textAlign),
+          lineHeight: style.lineHeight.endsWith("px") ? px(style.lineHeight) : void 0,
+          letterSpacing: style.letterSpacing.endsWith("px") ? px(style.letterSpacing) : void 0
+        });
+      }
+      walk(child, doc, out);
+    }
+  }
+  function directText(el2) {
+    let s = "";
+    for (const n of Array.from(el2.childNodes)) {
+      if (n.nodeType === 3) s += n.textContent || "";
+    }
+    return s.replace(/\s+/g, " ").trim();
+  }
+  onmessage = (e) => {
+    const m = e.data.pluginMessage;
+    if (!m) return;
+    if (m.type === "done") status.textContent = `Imported ${m.count} layers \u2713`;
+    if (m.type === "progress") status.textContent = `Building\u2026 ${m.done}/${m.total}`;
+  };
+})();
+</script>
+</body></html>

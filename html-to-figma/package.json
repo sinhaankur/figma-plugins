@@ -1,0 +1,21 @@
+{
+  "name": "figma-html-to-figma",
+  "version": "0.1.0",
+  "description": "Import a live URL or HTML into Figma as editable layers — computed CSS mapped to frames, text and fills. On-device.",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "test": "node src/css-core.test.mjs"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT",
+  "author": "Ankur Sinha",
+  "allowScripts": {
+    "esbuild@0.24.2": true
+  }
+}
