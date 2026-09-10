@@ -1,0 +1,21 @@
+{
+  "name": "figma-tokens-sync",
+  "version": "0.1.0",
+  "description": "Sync Figma color/type/spacing styles with W3C design tokens JSON + CSS variables — export and re-apply.",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "test": "node src/tokens-core.test.mjs"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT",
+  "author": "Ankur Sinha",
+  "allowScripts": {
+    "esbuild@0.24.2": true
+  }
+}

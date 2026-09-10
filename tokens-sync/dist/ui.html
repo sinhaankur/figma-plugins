@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><style>
+:root{--bg:#0e0f13;--card:#16181f;--fg:#f3f4f6;--muted:#9aa0aa;--accent:#f43f5e;--line:rgba(255,255,255,.1)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);font-size:13px}
+.wrap{padding:14px}h1{font-size:15px;margin:0 0 2px}.sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+.tabs{display:flex;gap:4px;background:var(--card);border-radius:8px;padding:3px;margin-bottom:12px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit}
+.tabs button.on{background:var(--accent);color:#fff}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+input[type=text],textarea{width:100%;background:#0b0c10;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:9px;font-family:ui-monospace,Menlo,monospace;font-size:11px}
+textarea{height:230px;resize:vertical;white-space:pre}
+label{font-size:12px;color:var(--muted)}
+.btn{border:0;border-radius:9px;padding:9px 12px;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px}
+.primary{background:var(--accent);color:#fff}.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.seg{display:flex;gap:4px;margin:8px 0}
+.seg button{flex:1;background:var(--card);border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:6px;cursor:pointer;font-family:inherit;font-size:11px}
+.seg button.on{border-color:var(--accent);color:var(--fg)}
+.counts{color:var(--muted);font-size:11px;margin:8px 0}
+.status{color:var(--muted);font-size:11px;min-height:14px;margin-top:6px}
+.hidden{display:none}
+</style></head><body>
+<div class="wrap">
+  <h1>Design Tokens Sync</h1>
+  <p class="sub">Figma styles ⇄ design tokens (JSON) + CSS variables. On-device.</p>
+
+  <div class="tabs"><button id="tabExport" class="on">Export</button><button id="tabImport">Import</button></div>
+
+  <!-- EXPORT -->
+  <div id="paneExport">
+    <div class="row"><label style="flex:0 0 auto">CSS var prefix</label><input type="text" id="prefix" placeholder="e.g. kelo (optional)"/></div>
+    <button class="btn primary" id="doExport" style="width:100%">Read styles from this file</button>
+    <div class="counts" id="counts"></div>
+    <div class="seg"><button id="fmtJson" class="on">Tokens JSON</button><button id="fmtCss">CSS variables</button></div>
+    <textarea id="outText" readonly placeholder="Run export to see tokens…"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="copy" style="flex:1">Copy</button><button class="btn ghost" id="download" style="flex:1">Download</button></div>
+  </div>
+
+  <!-- IMPORT -->
+  <div id="paneImport" class="hidden">
+    <label>Paste a tokens JSON to apply as Figma color styles:</label>
+    <textarea id="inText" placeholder='{ "color": { "brand": { "accent": { "$value": "#F43F5E", "$type": "color" } } } }'></textarea>
+    <button class="btn primary" id="doImport" style="width:100%;margin-top:8px">Apply to Figma styles</button>
+  </div>
+
+  <div class="status" id="status"></div>
+</div>
+<script>"use strict";
+(() => {
+  // src/ui.ts
+  var el = (id) => document.getElementById(id);
+  var fmt = "json";
+  var lastJson = "";
+  var lastCss = "";
+  el("tabExport").addEventListener("click", () => tab("export"));
+  el("tabImport").addEventListener("click", () => tab("import"));
+  function tab(t) {
+    el("tabExport").classList.toggle("on", t === "export");
+    el("tabImport").classList.toggle("on", t === "import");
+    el("paneExport").classList.toggle("hidden", t !== "export");
+    el("paneImport").classList.toggle("hidden", t !== "import");
+  }
+  el("fmtJson").addEventListener("click", () => setFmt("json"));
+  el("fmtCss").addEventListener("click", () => setFmt("css"));
+  function setFmt(f) {
+    fmt = f;
+    el("fmtJson").classList.toggle("on", f === "json");
+    el("fmtCss").classList.toggle("on", f === "css");
+    el("outText").value = f === "json" ? lastJson : lastCss;
+  }
+  el("doExport").addEventListener("click", () => {
+    el("status").textContent = "Reading styles\u2026";
+    parent.postMessage({ pluginMessage: { type: "export", prefix: el("prefix").value.trim() } }, "*");
+  });
+  el("copy").addEventListener("click", async () => {
+    const txt = el("outText").value;
+    try {
+      await navigator.clipboard.writeText(txt);
+      el("status").textContent = "Copied \u2713";
+    } catch {
+      el("outText").select();
+      document.execCommand("copy");
+      el("status").textContent = "Copied \u2713";
+    }
+  });
+  el("download").addEventListener("click", () => {
+    const txt = el("outText").value;
+    const blob = new Blob([txt], { type: fmt === "json" ? "application/json" : "text/css" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fmt === "json" ? "tokens.json" : "tokens.css";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  el("doImport").addEventListener("click", () => {
+    const json = el("inText").value.trim();
+    if (!json) {
+      el("status").textContent = "Paste a tokens JSON first.";
+      return;
+    }
+    el("status").textContent = "Applying\u2026";
+    parent.postMessage({ pluginMessage: { type: "import", json } }, "*");
+  });
+  onmessage = (e) => {
+    const m = e.data.pluginMessage;
+    if (!m) return;
+    if (m.type === "exported") {
+      lastJson = m.json;
+      lastCss = m.css;
+      el("outText").value = fmt === "json" ? lastJson : lastCss;
+      el("counts").textContent = `${m.counts.colors} colors \xB7 ${m.counts.text} text \xB7 ${m.counts.spacing} spacing`;
+      el("status").textContent = "Exported \u2713";
+    } else if (m.type === "imported") {
+      el("status").textContent = `Applied \u2014 ${m.created} created, ${m.updated} updated \u2713`;
+    } else if (m.type === "import-error") {
+      el("status").textContent = m.message;
+    }
+  };
+})();
+</script>
+</body></html>
