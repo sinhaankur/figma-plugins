@@ -1,0 +1,21 @@
+{
+  "name": "figma-content-filler",
+  "version": "0.1.0",
+  "description": "Replace lorem ipsum with realistic on-device data — names, emails, prices, dates, ratings. No network.",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "test": "node src/data-core.test.mjs"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT",
+  "author": "Ankur Sinha",
+  "allowScripts": {
+    "esbuild@0.24.2": true
+  }
+}

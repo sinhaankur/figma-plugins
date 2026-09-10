@@ -10,6 +10,7 @@ they run entirely inside Figma, no network, nothing leaves your machine.
 | [PDF to Figma](./pdf-to-figma) | Import a PDF as editable frames (exact page image + editable text via bundled pdf.js) | ✅ built |
 | [Style & A11y Auditor](./style-auditor) | Flag hardcoded colors, detached instances, off-scale spacing, low contrast (WCAG), small tap targets — click to jump to the node | ✅ built (17 tests) |
 | [Design Tokens Sync](./tokens-sync) | Figma styles ⇄ W3C design tokens JSON + CSS variables; export and re-apply | ✅ built (19 tests) |
+| [Content Filler](./content-filler) | Replace lorem ipsum with realistic on-device data — auto-detects field type from layer names | ✅ built (18 tests) |
 | Component Library Manager | Scan for reusable pieces, promote to components, tidy naming, keep the system coherent | ⏳ planned |
 | Figma → clean code | Export a frame as production HTML/CSS or React + Tailwind | ⏳ planned |
 | Real content filler | Replace lorem ipsum with realistic on-device data (names, prices, dates) | ⏳ planned |

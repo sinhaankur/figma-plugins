@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><style>
+:root{--bg:#0e0f13;--card:#16181f;--fg:#f3f4f6;--muted:#9aa0aa;--accent:#f43f5e;--line:rgba(255,255,255,.1)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);font-size:13px}
+.wrap{padding:14px}h1{font-size:15px;margin:0 0 2px}.sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+.count{background:var(--card);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px}
+.count b{color:var(--accent)}
+label{font-size:12px;color:var(--muted);display:block;margin:10px 0 4px}
+select{width:100%;background:#0b0c10;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:9px;font-family:inherit;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer}
+.chip.on{border-color:var(--accent);color:var(--fg)}
+.btn{width:100%;border:0;border-radius:10px;padding:12px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;margin-top:14px}
+.btn:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.status{color:var(--muted);font-size:11px;min-height:14px;margin-top:8px}
+.note{color:var(--muted);font-size:11px;margin-top:12px;line-height:1.5}
+</style></head><body>
+<div class="wrap">
+  <h1>Content Filler</h1>
+  <p class="sub">Replace lorem ipsum with realistic data. On-device — no network.</p>
+
+  <div class="count" id="count">Select text layers to fill…</div>
+
+  <label>What to fill with</label>
+  <div class="chips" id="chips">
+    <span class="chip on" data-m="auto">Auto (by layer name)</span>
+    <span class="chip" data-m="fullName">Name</span>
+    <span class="chip" data-m="email">Email</span>
+    <span class="chip" data-m="price">Price</span>
+    <span class="chip" data-m="date">Date</span>
+    <span class="chip" data-m="city">City</span>
+    <span class="chip" data-m="company">Company</span>
+    <span class="chip" data-m="jobTitle">Job title</span>
+    <span class="chip" data-m="rating">Rating</span>
+    <span class="chip" data-m="phone">Phone</span>
+    <span class="chip" data-m="sentence">Sentence</span>
+    <span class="chip" data-m="paragraph">Paragraph</span>
+  </div>
+
+  <button class="btn" id="fill" disabled>Fill selected text</button>
+  <div class="row"><button class="btn" id="reshuffle" style="background:transparent;border:1px solid var(--line);color:var(--muted)">Reshuffle</button></div>
+
+  <div class="status" id="status"></div>
+  <p class="note"><b>Auto</b> reads each layer's name (e.g. “Email”, “Price”, “Bio”) and fills the right kind of data — each layer varied so lists look real.</p>
+</div>
+<script>"use strict";
+(() => {
+  // src/ui.ts
+  var el = (id) => document.getElementById(id);
+  var mode = "auto";
+  var seed = Math.floor(Math.random() * 1e6);
+  el("chips").querySelectorAll(".chip").forEach((chip) => chip.addEventListener("click", () => {
+    el("chips").querySelectorAll(".chip").forEach((c) => c.classList.remove("on"));
+    chip.classList.add("on");
+    mode = chip.dataset.m;
+  }));
+  el("fill").addEventListener("click", () => {
+    seed = Math.floor(Math.random() * 1e6);
+    send();
+  });
+  el("reshuffle").addEventListener("click", () => {
+    seed = Math.floor(Math.random() * 1e6);
+    send();
+  });
+  function send() {
+    el("status").textContent = "Filling\u2026";
+    parent.postMessage({ pluginMessage: { type: "fill", mode, seed } }, "*");
+  }
+  onmessage = (e) => {
+    const m = e.data.pluginMessage;
+    if (!m) return;
+    if (m.type === "count") {
+      const n = m.n;
+      el("count").innerHTML = n ? `<b>${n}</b> text layer${n === 1 ? "" : "s"} selected` : "Select text layers to fill\u2026";
+      el("fill").disabled = n === 0;
+    } else if (m.type === "filled") {
+      el("status").textContent = `Filled ${m.n} layer${m.n === 1 ? "" : "s"} \u2713 \u2014 Reshuffle for new values`;
+    }
+  };
+})();
+</script>
+</body></html>
