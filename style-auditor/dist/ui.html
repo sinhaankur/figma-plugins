@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root{--bg:#0e0f13;--card:#16181f;--fg:#f3f4f6;--muted:#9aa0aa;--accent:#f43f5e;--line:rgba(255,255,255,.1);--err:#f43f5e;--warn:#fbbf24;--info:#60a5fa;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--fg);font-size:13px}
+  .wrap{padding:14px}
+  h1{font-size:15px;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+  .opt{display:flex;align-items:center;gap:6px;color:var(--fg);font-size:12px}
+  .opt input{accent-color:var(--accent)}
+  .scope{display:flex;gap:4px;background:var(--card);border-radius:8px;padding:3px;margin-bottom:10px}
+  .scope button{flex:1;border:0;background:transparent;color:var(--muted);padding:6px;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit;font-size:12px}
+  .scope button.on{background:var(--accent);color:#fff}
+  .run{width:100%;border:0;border-radius:10px;padding:11px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px}
+  .summary{display:flex;gap:8px;margin:12px 0}
+  .stat{flex:1;background:var(--card);border-radius:10px;padding:8px;text-align:center}
+  .stat b{display:block;font-size:20px}
+  .stat.e b{color:var(--err)} .stat.w b{color:var(--warn)} .stat.i b{color:var(--info)}
+  .stat span{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+  .list{margin-top:6px}
+  .item{display:flex;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+  .item:hover{background:var(--card);border-color:var(--line)}
+  .dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex:0 0 auto}
+  .dot.error{background:var(--err)} .dot.warn{background:var(--warn)} .dot.info{background:var(--info)}
+  .item .n{font-weight:600;font-size:12px}
+  .item .m{color:var(--muted);font-size:11px;line-height:1.4}
+  .empty{color:var(--muted);text-align:center;padding:24px;font-size:12px}
+  .clean{color:#34d399;text-align:center;padding:24px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Style & A11y Auditor</h1>
+  <p class="sub">Find hardcoded colors, detached instances, off-scale spacing, low contrast & small tap targets.</p>
+
+  <div class="scope">
+    <button id="scopePage" class="on">Whole page</button>
+    <button id="scopeSel">Selection</button>
+  </div>
+
+  <div class="opts">
+    <label class="opt"><input type="checkbox" id="cContrast" checked> Contrast (WCAG)</label>
+    <label class="opt"><input type="checkbox" id="cHardcoded" checked> Hardcoded colors</label>
+    <label class="opt"><input type="checkbox" id="cDetached" checked> Detached instances</label>
+    <label class="opt"><input type="checkbox" id="cSpacing" checked> Off-scale spacing</label>
+    <label class="opt"><input type="checkbox" id="cTap" checked> Tap targets</label>
+  </div>
+
+  <button class="run" id="run">Run audit</button>
+
+  <div id="out"></div>
+</div>
+
+<script>"use strict";
+(() => {
+  // src/ui.ts
+  var el = (id) => document.getElementById(id);
+  var out = el("out");
+  var scope = "page";
+  el("scopePage").addEventListener("click", () => setScope("page"));
+  el("scopeSel").addEventListener("click", () => setScope("selection"));
+  function setScope(s) {
+    scope = s;
+    el("scopePage").classList.toggle("on", s === "page");
+    el("scopeSel").classList.toggle("on", s === "selection");
+  }
+  el("run").addEventListener("click", () => {
+    out.innerHTML = `<div class="empty">Scanning\u2026</div>`;
+    parent.postMessage({ pluginMessage: { type: "run", scope, opts: {
+      checkContrast: el("cContrast").checked,
+      checkHardcoded: el("cHardcoded").checked,
+      checkDetached: el("cDetached").checked,
+      checkSpacing: el("cSpacing").checked,
+      checkTapTargets: el("cTap").checked
+    } } }, "*");
+  });
+  onmessage = (e) => {
+    const msg = e.data.pluginMessage;
+    if (!msg || msg.type !== "result") return;
+    render(msg.findings, msg.summary, msg.scanned);
+  };
+  function render(findings, summary, scanned) {
+    if (!findings.length) {
+      out.innerHTML = `<div class="clean">\u2713 Clean \u2014 no issues across ${scanned} layers.</div>`;
+      return;
+    }
+    const order = { error: 0, warn: 1, info: 2 };
+    findings.sort((a, b) => order[a.severity] - order[b.severity]);
+    const rows = findings.map((f) => `<div class="item" data-id="${f.id}">
+      <span class="dot ${f.severity}"></span>
+      <div><div class="n">${escape(f.name)}</div><div class="m">${escape(f.message)}</div></div>
+    </div>`).join("");
+    out.innerHTML = `
+    <div class="summary">
+      <div class="stat e"><b>${summary.errors}</b><span>Errors</span></div>
+      <div class="stat w"><b>${summary.warnings}</b><span>Warnings</span></div>
+      <div class="stat i"><b>${summary.info}</b><span>Info</span></div>
+    </div>
+    <div class="sub">${summary.total} issues across ${scanned} layers</div>
+    <div class="list">${rows}</div>`;
+    out.querySelectorAll(".item").forEach((row) => row.addEventListener("click", () => parent.postMessage({ pluginMessage: { type: "select", id: row.dataset.id } }, "*")));
+  }
+  function escape(s) {
+    return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  }
+})();
+</script>
+</body>
+</html>

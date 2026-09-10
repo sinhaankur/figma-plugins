@@ -5,24 +5,29 @@ they run entirely inside Figma, no network, nothing leaves your machine.
 
 ## Plugins
 
-### 1. [PDF to Figma](./pdf-to-figma) — import & edit
-Figma can't import PDFs. This does: drop a PDF and get **one editable frame per
-page** — the page rendered as an exact image, with **real editable text nodes**
-laid on top (extracted via a bundled pdf.js). Toggle image/text; text-only gives a
-vector-first import. All on-device.
+| Plugin | What it does | Status |
+|---|---|---|
+| [PDF to Figma](./pdf-to-figma) | Import a PDF as editable frames (exact page image + editable text via bundled pdf.js) | ✅ built |
+| [Style & A11y Auditor](./style-auditor) | Flag hardcoded colors, detached instances, off-scale spacing, low contrast (WCAG), small tap targets — click to jump to the node | ✅ built (17 tests) |
+| Component Library Manager | Scan for reusable pieces, promote to components, tidy naming, keep the system coherent | ⏳ planned |
+| Figma → clean code | Export a frame as production HTML/CSS or React + Tailwind | ⏳ planned |
+| Design tokens sync | Colors/type/spacing ⇄ JSON design tokens, in sync with your codebase | ⏳ planned |
+| Real content filler | Replace lorem ipsum with realistic on-device data (names, prices, dates) | ⏳ planned |
 
-### 2. Component Library Manager — *(in progress)*
-Build, organise and audit a component library: scan a file for reusable pieces,
-promote them to components, tidy naming, and keep the system coherent.
-
-## Build a plugin
+## Build any plugin
 ```bash
-cd pdf-to-figma
+cd <plugin>
 npm install
 npm run build       # → dist/code.js + dist/ui.html
+npm test            # where a plugin has a tested core (e.g. style-auditor)
 ```
-Then in Figma: **Plugins → Development → Import plugin from manifest…** → pick
-`pdf-to-figma/manifest.json`.
+Then in Figma: **Plugins → Development → Import plugin from manifest…** → pick that
+plugin's `manifest.json`.
+
+## Why on-device
+Every plugin declares `networkAccess: none`. Your files, PDFs, and content never
+leave Figma — the design equivalent of the rest of the [sinhaankur.com](https://sinhaankur.com)
+tools (Kelo, the Universe Engine): private by default.
 
 ## License
 MIT (code). PDF parsing by [pdf.js](https://github.com/mozilla/pdf.js) (Apache-2.0), bundled.
