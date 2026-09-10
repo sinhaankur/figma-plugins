@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="960" viewBox="0 0 1920 960">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0c10"/><stop offset="1" stop-color="#1b1016"/></linearGradient>
+<linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb7185"/><stop offset="1" stop-color="#e11d48"/></linearGradient>
+<radialGradient id="gl" cx="0.25" cy="0.3" r="0.7"><stop offset="0" stop-color="#f43f5e" stop-opacity="0.28"/><stop offset="1" stop-color="#f43f5e" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1920" height="960" fill="url(#bg)"/><rect width="1920" height="960" fill="url(#gl)"/>
+<g transform="translate(150,330)"><rect width="200" height="200" rx="48" fill="url(#r)"/><text x="100" y="142" text-anchor="middle" font-family="Georgia,serif" font-weight="800" font-size="130" fill="#fff">S</text></g>
+<text x="420" y="400" font-family="Georgia,serif" font-size="108" font-weight="700" fill="#f3f4f6">sinhaankur Kit</text>
+<text x="424" y="470" font-family="Arial,sans-serif" font-size="38" fill="#9aa0aa">One plugin for everything: kits · audit · library · tokens · content · HTML→layers · dev</text>
+<text x="424" y="530" font-family="Georgia,serif" font-style="italic" font-size="40" fill="#fb7185">On-device · free · open source</text>
+</svg>
