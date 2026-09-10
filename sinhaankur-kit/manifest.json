@@ -4,7 +4,13 @@
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
+  "documentAccess": "dynamic-page",
   "editorType": ["figma"],
-  "networkAccess": { "allowedDomains": ["*"], "reasoning": "Only the optional 'HTML from URL' feature fetches a page you enter, in the UI. Every other tool is fully on-device." },
-  "permissions": []
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Only the optional 'HTML from URL' tool fetches a page you enter, in the UI. Every other tool is fully on-device."
+  },
+  "relaunchButtons": [
+    { "command": "open", "name": "Open sinhaankur Kit" }
+  ]
 }

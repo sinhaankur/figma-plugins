@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  #root { height: auto; }
+  .wrap { padding: 0 12px; }
+  #html-input {
+    width: 100%; min-height: 160px; box-sizing: border-box;
+    font-family: monospace; font-size: 12px;
+    background: var(--figma-color-bg-secondary, #f5f5f5);
+    color: var(--figma-color-text, #333);
+    border: 1px solid var(--figma-color-border, #e0e0e0);
+    border-radius: 4px; padding: 8px; resize: vertical;
+  }
+  #html-input:focus { outline: 2px solid var(--figma-color-bg-brand, #0d99ff); border-color: transparent; }
+  #render-frame { position: absolute; left: -9999px; top: -9999px; width: 1280px; border: none; visibility: hidden; }
+  .status { font-size: 11px; color: var(--figma-color-text-secondary, #999); padding: 4px 12px; min-height: 14px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="root">
+  <fig-content>
+    <fig-group name="Source">
+      <fig-field>
+        <label>Import from</label>
+        <fig-options id="mode" options="Paste HTML, From URL"></fig-options>
+      </fig-field>
+    </fig-group>
+
+    <div id="panel-paste">
+      <fig-group name="HTML code">
+        <div class="wrap">
+          <textarea id="html-input" placeholder="Paste your HTML here…"></textarea>
+        </div>
+      </fig-group>
+    </div>
+
+    <div id="panel-url" class="hidden">
+      <fig-group name="Page URL">
+        <fig-field>
+          <label>URL</label>
+          <fig-input-text id="url-input" placeholder="https://example.com"></fig-input-text>
+        </fig-field>
+      </fig-group>
+    </div>
+
+    <fig-group name="Options">
+      <fig-field>
+        <label>Viewport width</label>
+        <fig-input-number id="vp-width" value="1280" units="px" min="320" max="3840"></fig-input-number>
+      </fig-field>
+    </fig-group>
+  </fig-content>
+
+  <div id="status" class="status"></div>
+
+  <fig-footer sticky>
+    <fig-button id="convert" type="submit">Convert to Figma</fig-button>
+  </fig-footer>
+</div>
+
+<iframe id="render-frame"></iframe>
+
+<script>
+  var statusEl = document.getElementById("status");
+  function setStatus(m) { statusEl.textContent = m || ""; }
+
+  // auto-resize the plugin window to fit content
+  function reportHeight() {
+    var h = Math.ceil(document.getElementById("root").getBoundingClientRect().height);
+    parent.postMessage({ pluginMessage: { type: "resize", height: h } }, "*");
+  }
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(reportHeight).observe(document.getElementById("root"));
+
+  // panel toggle
+  var mode = document.getElementById("mode");
+  mode.addEventListener("change", function () {
+    var isUrl = mode.value === "From URL";
+    document.getElementById("panel-paste").classList.toggle("hidden", isUrl);
+    document.getElementById("panel-url").classList.toggle("hidden", !isUrl);
+  });
+
+  // parse a rendered DOM element into a plain tree
+  function parseTree(el) {
+    var win = el.ownerDocument.defaultView;
+    if (el.nodeType === 3) {
+      var text = el.textContent.trim(); if (!text) return null;
+      var range = el.ownerDocument.createRange(); range.selectNodeContents(el);
+      var tr = range.getBoundingClientRect();
+      var pcs = el.parentElement ? win.getComputedStyle(el.parentElement) : {};
+      return { tag: "#text", text: text, styles: {
+        fontSize: pcs.fontSize || "14px", color: pcs.color || "rgb(0,0,0)",
+        fontWeight: pcs.fontWeight || "400", textAlign: pcs.textAlign || "left"
+      }, children: [], width: tr.width, height: tr.height, x: tr.left, y: tr.top };
+    }
+    var rect = el.getBoundingClientRect();
+    var cs = win.getComputedStyle(el);
+    var node = { tag: el.tagName.toLowerCase(), styles: {}, children: [],
+      width: rect.width, height: rect.height, x: rect.left, y: rect.top };
+    var props = ["backgroundColor","color","fontSize","fontWeight","textAlign","borderRadius","borderWidth","borderColor","opacity","display","visibility","boxShadow"];
+    for (var i = 0; i < props.length; i++) { try { node.styles[props[i]] = cs[props[i]] || ""; } catch (e) {} }
+    if (node.tag === "img") node.src = el.currentSrc || el.src;
+    for (var k = 0; k < el.childNodes.length; k++) {
+      var ch = el.childNodes[k];
+      if (ch.nodeType === 1) {
+        var tag = ch.tagName.toLowerCase();
+        if (["script","style","meta","link","noscript"].indexOf(tag) > -1) continue;
+        var p = parseTree(ch); if (p) node.children.push(p);
+      } else if (ch.nodeType === 3 && ch.textContent.trim()) {
+        var pt = parseTree(ch); if (pt) node.children.push(pt);
+      }
+    }
+    return node;
+  }
+
+  async function fetchBytes(url) {
+    try { var r = await fetch(url); var b = await r.arrayBuffer(); return Array.prototype.slice.call(new Uint8Array(b)); }
+    catch (e) { return null; }
+  }
+  async function processImages(node) {
+    if (!node) return;
+    if (node.tag === "img" && node.src) node.imageBytes = await fetchBytes(node.src);
+    if (node.children) for (var i = 0; i < node.children.length; i++) await processImages(node.children[i]);
+  }
+
+  function renderHtml(html, width) {
+    var iframe = document.getElementById("render-frame");
+    iframe.style.width = width + "px";
+    return new Promise(function (resolve, reject) {
+      iframe.onload = async function () {
+        try {
+          var doc = iframe.contentDocument, body = doc.body;
+          if (!body || !body.children.length) { reject(new Error("No content to convert")); return; }
+          setStatus("Parsing layout…");
+          var tree = parseTree(body);
+          setStatus("Processing images…"); await processImages(tree);
+          setStatus(""); resolve(tree);
+        } catch (e) { reject(e); }
+      };
+      var doc = iframe.contentDocument;
+      doc.open();
+      doc.write('<!doctype html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0;box-sizing:border-box}</style></head><body>' + html + "</body></html>");
+      doc.close();
+    });
+  }
+
+  document.getElementById("convert").addEventListener("click", async function () {
+    var btn = this; btn.setAttribute("disabled", "");
+    try {
+      var width = Number(document.getElementById("vp-width").value) || 1280;
+      var html;
+      if (mode.value === "From URL") {
+        var url = document.getElementById("url-input").value.trim();
+        if (!url) { setStatus("Enter a URL."); btn.removeAttribute("disabled"); return; }
+        setStatus("Fetching page…");
+        var res = await fetch(url); if (!res.ok) throw new Error("Fetch failed: " + res.status);
+        html = await res.text();
+      } else {
+        html = document.getElementById("html-input").value.trim();
+        if (!html) { setStatus("Paste some HTML first."); btn.removeAttribute("disabled"); return; }
+      }
+      var tree = await renderHtml(html, width);
+      setStatus("Converting…");
+      parent.postMessage({ pluginMessage: { type: "convert", tree: tree } }, "*");
+      setTimeout(function () { setStatus(""); }, 2000);
+    } catch (e) { setStatus("Error: " + e.message); }
+    finally { btn.removeAttribute("disabled"); }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "HTML to Figma",
+  "id": "sinhaankur-html-to-figma",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "documentAccess": "dynamic-page",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Fetches user-provided URLs (and their images) to import HTML into Figma."
+  },
+  "relaunchButtons": [
+    { "command": "open", "name": "HTML to Figma" }
+  ]
+}
