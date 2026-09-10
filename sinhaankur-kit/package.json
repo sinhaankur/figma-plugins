@@ -1,0 +1,20 @@
+{
+  "name": "sinhaankur-kit",
+  "version": "0.1.0",
+  "description": "One Figma plugin for everything: create UX kits, audit, manage library, sync tokens, fill content, HTML→layers, and export a dev bundle for VS Code.",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT",
+  "author": "Ankur Sinha",
+  "allowScripts": {
+    "esbuild@0.24.2": true
+  }
+}

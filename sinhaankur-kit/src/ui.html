@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><style>
+:root{--bg:#0e0f13;--card:#16181f;--card2:#1c1f28;--fg:#f3f4f6;--muted:#9aa0aa;--accent:#f43f5e;--accent2:#fb7185;--line:rgba(255,255,255,.09);--ok:#34d399;--warn:#fbbf24;--info:#60a5fa}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--fg);font-size:13px}
+.wrap{padding:16px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:grid;place-items:center;font-weight:900;color:#fff;box-shadow:0 2px 10px rgba(244,63,94,.35)}
+.brand h1{font-size:16px;margin:0}.brand .by{margin-left:auto;font-size:10px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase}
+.back{background:transparent;border:0;color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;padding:0;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;transition:.12s;text-align:left}
+.tile:hover{border-color:var(--accent);background:var(--card2)}
+.tile .ic{font-size:20px}.tile .n{font-weight:700;margin-top:8px;font-size:13px}.tile .d{color:var(--muted);font-size:11px;margin-top:2px;line-height:1.4}
+label{font-size:11px;color:var(--muted);display:block;margin:10px 0 5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+input[type=text],textarea,select{width:100%;background:#0b0c10;border:1px solid var(--line);border-radius:9px;color:var(--fg);padding:10px;font-family:inherit;font-size:12px}
+input[type=color]{width:44px;height:36px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px;cursor:pointer}
+textarea{font-family:ui-monospace,Menlo,monospace;font-size:11px;height:180px;resize:vertical}
+.crow{display:flex;align-items:center;gap:8px;margin-bottom:8px}.crow label{margin:0;flex:1}
+.go{width:100%;border:0;border-radius:11px;padding:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px;margin-top:12px;box-shadow:0 4px 14px rgba(244,63,94,.22)}
+.go:hover{filter:brightness(1.07)}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:9px;cursor:pointer;font-family:inherit;font-size:12px}
+.tabs{display:flex;gap:4px;background:var(--card);border-radius:8px;padding:3px;margin-bottom:10px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit;font-size:12px}
+.tabs button.on{background:var(--accent);color:#fff}
+.status{color:var(--muted);font-size:11px;min-height:15px;margin-top:8px;text-align:center}
+.summary{display:flex;gap:8px;margin:10px 0}.stat{flex:1;background:var(--card);border-radius:9px;padding:8px;text-align:center}.stat b{display:block;font-size:19px}.stat.e b{color:var(--accent)}.stat.w b{color:var(--warn)}.stat.i b{color:var(--info)}.stat span{color:var(--muted);font-size:10px;text-transform:uppercase}
+.item{display:flex;gap:8px;padding:8px 9px;border-radius:8px;cursor:pointer}.item:hover{background:var(--card)}
+.dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex:0 0 auto}.dot.error{background:var(--accent)}.dot.warn{background:var(--warn)}.dot.info{background:var(--info)}
+.item .n{font-weight:600;font-size:12px}.item .m{color:var(--muted);font-size:11px}
+.list{max-height:240px;overflow:auto}
+.hidden{display:none}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pill{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer}.pill.on{border-color:var(--accent);color:var(--fg)}
+iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;border:0;opacity:0}
+</style></head><body>
+<div class="wrap">
+  <div class="brand"><div class="mark">S</div><h1>sinhaankur Kit</h1><span class="by">everything, in one plugin</span></div>
+
+  <!-- HOME -->
+  <div id="home">
+    <div class="grid">
+      <button class="tile" data-go="kit"><div class="ic">🧩</div><div class="n">Create UX kit</div><div class="d">Buttons, inputs, cards… from your colors & font</div></button>
+      <button class="tile" data-go="audit"><div class="ic">🔍</div><div class="n">Audit</div><div class="d">Contrast, hardcoded colors, spacing, tap targets</div></button>
+      <button class="tile" data-go="library"><div class="ic">📚</div><div class="n">Library manager</div><div class="d">Naming, duplicates, structure, health</div></button>
+      <button class="tile" data-go="tokens"><div class="ic">🎨</div><div class="n">Tokens sync</div><div class="d">Styles ⇄ JSON + CSS variables</div></button>
+      <button class="tile" data-go="content"><div class="ic">✍️</div><div class="n">Content filler</div><div class="d">Realistic names, prices, dates…</div></button>
+      <button class="tile" data-go="html"><div class="ic">🌐</div><div class="n">HTML → layers</div><div class="d">A URL or HTML into editable layers</div></button>
+      <button class="tile" data-go="dev"><div class="ic">💻</div><div class="n">Dev / VS Code</div><div class="d">Export tokens + component manifest for your repo</div></button>
+    </div>
+  </div>
+
+  <!-- KIT -->
+  <div id="kit" class="hidden">
+    <button class="back" data-home>‹ Home</button><label>Create a UX kit</label>
+    <div class="crow"><label>Accent</label><input type="color" id="kAccent" value="#f43f5e"></div>
+    <div class="crow"><label>Text</label><input type="color" id="kFg" value="#0e0f13"></div>
+    <div class="crow"><label>Background</label><input type="color" id="kBg" value="#ffffff"></div>
+    <div class="crow"><label>Muted / border</label><input type="color" id="kMuted" value="#9aa0aa"></div>
+    <label>Font family</label><input type="text" id="kFont" value="Inter">
+    <label>Corner radius</label><input type="text" id="kRadius" value="10">
+    <button class="go" id="kGo">Generate kit + styles</button><div class="status" id="kStatus"></div>
+  </div>
+
+  <!-- AUDIT -->
+  <div id="audit" class="hidden">
+    <button class="back" data-home>‹ Home</button>
+    <div class="tabs"><button id="aPage" class="on">Whole page</button><button id="aSel">Selection</button></div>
+    <button class="go" id="aGo">Run audit</button><div id="aOut"></div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div id="library" class="hidden">
+    <button class="back" data-home>‹ Home</button><label>Component library</label>
+    <button class="go" id="lGo">Scan components</button><div id="lOut"></div>
+  </div>
+
+  <!-- TOKENS -->
+  <div id="tokens" class="hidden">
+    <button class="back" data-home>‹ Home</button>
+    <div class="tabs"><button id="tExport" class="on">Export</button><button id="tImport">Import</button></div>
+    <div id="tExportPane"><div class="crow"><label>CSS prefix</label><input type="text" id="tPrefix" placeholder="kelo (optional)"></div>
+      <button class="go" id="tGo">Read styles</button>
+      <div class="tabs" style="margin-top:8px"><button id="fJson" class="on">JSON</button><button id="fCss">CSS</button></div>
+      <textarea id="tOut" readonly></textarea><button class="ghost" id="tCopy" style="width:100%;margin-top:6px">Copy</button></div>
+    <div id="tImportPane" class="hidden"><label>Paste tokens JSON</label><textarea id="tIn"></textarea><button class="go" id="tImportGo">Apply to styles</button></div>
+    <div class="status" id="tStatus"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content" class="hidden">
+    <button class="back" data-home>‹ Home</button><label>Fill selected text</label>
+    <div class="pills" id="cPills">
+      <span class="pill on" data-m="auto">Auto</span><span class="pill" data-m="fullName">Name</span><span class="pill" data-m="email">Email</span><span class="pill" data-m="price">Price</span><span class="pill" data-m="date">Date</span><span class="pill" data-m="city">City</span><span class="pill" data-m="company">Company</span><span class="pill" data-m="rating">Rating</span><span class="pill" data-m="paragraph">Paragraph</span>
+    </div>
+    <button class="go" id="cGo">Fill</button><button class="ghost" id="cShuffle" style="width:100%;margin-top:6px">Reshuffle</button><div class="status" id="cStatus"></div>
+  </div>
+
+  <!-- HTML -->
+  <div id="html" class="hidden">
+    <button class="back" data-home>‹ Home</button>
+    <div class="tabs"><button id="hHtml" class="on">Paste HTML</button><button id="hUrl">From URL</button></div>
+    <div id="hHtmlPane"><label>HTML</label><textarea id="hHtmlIn" placeholder="Paste page HTML…"></textarea></div>
+    <div id="hUrlPane" class="hidden"><label>URL</label><input type="text" id="hUrlIn" placeholder="https://sinhaankur.com"></div>
+    <div class="crow"><label>Width</label><input type="text" id="hWidth" value="1056"></div>
+    <button class="go" id="hGo">Import</button><div class="status" id="hStatus"></div>
+  </div>
+
+  <!-- DEV -->
+  <div id="dev" class="hidden">
+    <button class="back" data-home>‹ Home</button><label>Dev bundle (for VS Code / your repo)</label>
+    <div class="crow"><label>CSS prefix</label><input type="text" id="dPrefix" placeholder="kelo (optional)"></div>
+    <button class="go" id="dGo">Build dev bundle</button>
+    <label style="margin-top:10px">Result</label><textarea id="dOut" readonly placeholder="tokens.css + tokens.json + components manifest…"></textarea>
+    <div class="crow" style="margin-top:6px"><button class="ghost" id="dCopy" style="flex:1">Copy</button><button class="ghost" id="dDownload" style="flex:1">Download bundle</button></div>
+    <div class="status" id="dStatus"></div>
+  </div>
+</div>
+<iframe id="stage" sandbox="allow-same-origin"></iframe>
+<script src="ui.js"></script>
+</body></html>

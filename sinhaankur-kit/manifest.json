@@ -1,0 +1,10 @@
+{
+  "name": "sinhaankur Kit — all-in-one",
+  "id": "sinhaankur-kit",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "networkAccess": { "allowedDomains": ["*"], "reasoning": "Only the optional 'HTML from URL' feature fetches a page you enter, in the UI. Every other tool is fully on-device." },
+  "permissions": []
+}

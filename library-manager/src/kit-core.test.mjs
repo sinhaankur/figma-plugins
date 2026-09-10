@@ -1,0 +1,14 @@
+import assert from "node:assert";
+import { execSync } from "node:child_process";
+execSync("./node_modules/.bin/esbuild src/kit-core.ts --format=esm --outfile=dist/kit-core.mjs", { stdio: "inherit" });
+const c = await import("../dist/kit-core.mjs");
+const { buildKit, typeScale, colorRoles, hexA, DEFAULT_THEME } = c;
+let pass=0,fail=0; const t=(n,fn)=>{try{fn();pass++;console.log("  ✓",n)}catch(e){fail++;console.log("  ✗",n,"\n    ",e.message)}};
+t("buildKit returns components", () => assert.ok(buildKit(DEFAULT_THEME).length >= 8));
+t("kit has primary button with accent", () => { const b=buildKit({accent:"#123456"}).find(x=>x.name==="Buttons/Primary"); assert.strictEqual(b.fill,"#123456"); });
+t("kit names are grouped", () => assert.ok(buildKit(DEFAULT_THEME).every(x=>x.name.includes("/"))));
+t("typeScale has Body = base", () => { const b=typeScale(16).find(x=>x.name==="Body"); assert.strictEqual(b.size,16); });
+t("typeScale H1 double body", () => { const h=typeScale(16).find(x=>x.name==="H1"); assert.strictEqual(h.size,32); });
+t("colorRoles include Brand/Accent", () => { const r=colorRoles({accent:"#ABCDEF"}).find(x=>x.name==="Brand/Accent"); assert.strictEqual(r.hex,"#ABCDEF"); });
+t("hexA appends alpha", () => assert.strictEqual(hexA("#F43F5E",0.15),"#F43F5E26"));
+console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail?1:0);

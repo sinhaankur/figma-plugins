@@ -1,7 +1,14 @@
 # Figma plugins
 
 On-device Figma plugins by [Ankur Sinha](https://sinhaankur.com). Privacy-first —
-they run entirely inside Figma, no network, nothing leaves your machine.
+they run entirely inside Figma, nothing leaves your machine unless you ask.
+
+## ⭐ sinhaankur Kit — all-in-one
+**[→ sinhaankur-kit](./sinhaankur-kit)** unifies every tool below into **one plugin**
+with a home menu: Create UX kit · Audit · Library manager · Tokens sync · Content
+filler · HTML→layers · Dev/VS-Code bundle. This is the one to install & launch.
+
+The standalone plugins remain for focused use / their tested cores:
 
 ## Plugins
 

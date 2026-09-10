@@ -1,0 +1,21 @@
+{
+  "name": "figma-library-manager",
+  "version": "0.1.0",
+  "description": "Manage + create Figma components: audit naming/duplicates, propose structure, generate a starter UX kit from your colors & fonts.",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "test": "node src/library-core.test.mjs"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT",
+  "author": "Ankur Sinha",
+  "allowScripts": {
+    "esbuild@0.24.2": true
+  }
+}
