@@ -1,6 +1,6 @@
 {
-  "name": "HTML to Figma — by sinhaankur",
-  "id": "sinhaankur-html-to-figma",
+  "name": "HTML to Figma (build) — by sinhaankur",
+  "id": "sinhaankur-html-to-figma-build",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
