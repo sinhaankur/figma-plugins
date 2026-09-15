@@ -3,63 +3,82 @@
 <head>
 <meta charset="utf-8" />
 <style>
-  html, body { margin: 0; padding: 0; }
-  #root { height: auto; }
-  .wrap { padding: 0 12px; }
-  #html-input {
-    width: 100%; min-height: 160px; box-sizing: border-box;
-    font-family: monospace; font-size: 12px;
-    background: var(--figma-color-bg-secondary, #f5f5f5);
-    color: var(--figma-color-text, #333);
-    border: 1px solid var(--figma-color-border, #e0e0e0);
-    border-radius: 4px; padding: 8px; resize: vertical;
+  :root {
+    --bg: var(--figma-color-bg, #fff);
+    --bg2: var(--figma-color-bg-secondary, #f5f5f5);
+    --text: var(--figma-color-text, #1e1e1e);
+    --text2: var(--figma-color-text-secondary, #999);
+    --border: var(--figma-color-border, #e6e6e6);
+    --brand: var(--figma-color-bg-brand, #0d99ff);
+    --on-brand: var(--figma-color-text-onbrand, #fff);
   }
-  #html-input:focus { outline: 2px solid var(--figma-color-bg-brand, #0d99ff); border-color: transparent; }
-  #render-frame { position: absolute; left: -9999px; top: -9999px; width: 1280px; border: none; visibility: hidden; }
-  .status { font-size: 11px; color: var(--figma-color-text-secondary, #999); padding: 4px 12px; min-height: 14px; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px; color: var(--text); background: var(--bg);
+  }
+  #root { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  label { font-size: 11px; color: var(--text2); }
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1; padding: 6px 8px; font-size: 11px; cursor: pointer;
+    background: var(--bg2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 5px;
+  }
+  .seg button.active { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+  textarea, input[type="text"], input[type="number"] {
+    width: 100%; box-sizing: border-box;
+    font-size: 12px; color: var(--text);
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 5px; padding: 8px;
+  }
+  textarea {
+    min-height: 150px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    resize: vertical;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--brand); border-color: transparent; }
   .hidden { display: none; }
+  .status { font-size: 11px; color: var(--text2); min-height: 14px; }
+  #render-frame { position: absolute; left: -9999px; top: -9999px; width: 1280px; border: none; visibility: hidden; }
+  .footer { position: sticky; bottom: 0; background: var(--bg); padding-top: 4px; }
+  #convert {
+    width: 100%; padding: 9px; font-size: 12px; font-weight: 600; cursor: pointer;
+    background: var(--brand); color: var(--on-brand); border: none; border-radius: 6px;
+  }
+  #convert:disabled { opacity: 0.5; cursor: default; }
 </style>
 </head>
 <body>
 <div id="root">
-  <fig-content>
-    <fig-group name="Source">
-      <fig-field>
-        <label>Import from</label>
-        <fig-options id="mode" options="Paste HTML, From URL"></fig-options>
-      </fig-field>
-    </fig-group>
-
-    <div id="panel-paste">
-      <fig-group name="HTML code">
-        <div class="wrap">
-          <textarea id="html-input" placeholder="Paste HTML here — e.g. a Claude artifact, a page's source, or any HTML snippet…"></textarea>
-        </div>
-      </fig-group>
+  <div class="field">
+    <label>Import from</label>
+    <div class="seg" id="mode">
+      <button type="button" data-mode="paste" class="active">Paste HTML</button>
+      <button type="button" data-mode="url">From URL</button>
     </div>
+  </div>
 
-    <div id="panel-url" class="hidden">
-      <fig-group name="Page URL">
-        <fig-field>
-          <label>URL</label>
-          <fig-input-text id="url-input" placeholder="https://example.com"></fig-input-text>
-        </fig-field>
-      </fig-group>
-    </div>
+  <div class="field" id="panel-paste">
+    <label>HTML code</label>
+    <textarea id="html-input" placeholder="Paste HTML here — e.g. a Claude artifact, a page's source, or any HTML snippet…"></textarea>
+  </div>
 
-    <fig-group name="Options">
-      <fig-field>
-        <label>Viewport width</label>
-        <fig-input-number id="vp-width" value="1280" units="px" min="320" max="3840"></fig-input-number>
-      </fig-field>
-    </fig-group>
-  </fig-content>
+  <div class="field hidden" id="panel-url">
+    <label>Page URL</label>
+    <input type="text" id="url-input" placeholder="https://example.com" />
+  </div>
+
+  <div class="field">
+    <label>Viewport width (px)</label>
+    <input type="number" id="vp-width" value="1280" min="320" max="3840" />
+  </div>
 
   <div id="status" class="status"></div>
 
-  <fig-footer sticky>
-    <fig-button id="convert" type="submit">Convert to Figma</fig-button>
-  </fig-footer>
+  <div class="footer">
+    <button id="convert" type="button">Convert to Figma</button>
+  </div>
 </div>
 
 <iframe id="render-frame"></iframe>
@@ -75,10 +94,17 @@
   }
   if (typeof ResizeObserver !== "undefined") new ResizeObserver(reportHeight).observe(document.getElementById("root"));
 
-  // panel toggle
-  var mode = document.getElementById("mode");
-  mode.addEventListener("change", function () {
-    var isUrl = mode.value === "From URL";
+  // mode toggle (plain buttons, no deprecated fig-* components)
+  var currentMode = "paste";
+  var modeEl = document.getElementById("mode");
+  modeEl.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-mode]");
+    if (!btn) return;
+    currentMode = btn.getAttribute("data-mode");
+    var buttons = modeEl.querySelectorAll("button");
+    for (var i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
+    btn.classList.add("active");
+    var isUrl = currentMode === "url";
     document.getElementById("panel-paste").classList.toggle("hidden", isUrl);
     document.getElementById("panel-url").classList.toggle("hidden", !isUrl);
   });
@@ -152,7 +178,7 @@
     try {
       var width = Number(document.getElementById("vp-width").value) || 1280;
       var html;
-      if (mode.value === "From URL") {
+      if (currentMode === "url") {
         var url = document.getElementById("url-input").value.trim();
         if (!url) { setStatus("Enter a URL."); btn.removeAttribute("disabled"); return; }
         setStatus("Fetching page…");
