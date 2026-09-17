@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><style>
+/* Figma-native UI — all colour from Figma theme vars (auto light/dark), 11px Inter. */
+:root{
+  --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fs: 11px; --radius: 6px;
+  --figma-color-bg:#fff; --figma-color-bg-secondary:#f5f5f5; --figma-color-bg-hover:rgba(0,0,0,.06);
+  --figma-color-bg-brand:#0d99ff; --figma-color-bg-brand-hover:#0b87e0; --figma-color-bg-disabled:rgba(0,0,0,.06);
+  --figma-color-text:#1e1e1e; --figma-color-text-secondary:#666; --figma-color-text-ondisabled:rgba(0,0,0,.3);
+  --figma-color-text-onbrand:#fff; --figma-color-border:rgba(0,0,0,.1); --figma-color-border-brand:#0d99ff;
+  --figma-color-text-success:#14ae5c; --figma-color-text-warning:#a05a00; --figma-color-text-danger:#c00;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font);font-size:var(--fs);line-height:16px;color:var(--figma-color-text);
+  background:var(--figma-color-bg);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100vh}
+.header{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--figma-color-border);flex:0 0 auto}
+.header .mark{width:20px;height:20px;color:var(--figma-color-bg-brand)}
+.header h1{font-size:var(--fs);font-weight:600;margin:0}
+.header .by{margin-left:auto;font-size:10px;color:var(--figma-color-text-secondary)}
+.body{flex:1 1 auto;overflow-y:auto;padding:12px 16px}
+.seg{display:flex;background:var(--figma-color-bg-secondary);border-radius:var(--radius);padding:2px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:transparent;color:var(--figma-color-text-secondary);padding:5px 8px;border-radius:4px;font:inherit;font-weight:500;cursor:pointer}
+.seg button:hover{color:var(--figma-color-text)}
+.seg button.on{background:var(--figma-color-bg);color:var(--figma-color-text);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+label{display:block;font-size:11px;font-weight:600;margin:0 0 6px}
+.hint{color:var(--figma-color-text-secondary);line-height:15px;margin:0 0 12px}
+.hidden{display:none}
+
+/* audit summary chips */
+.summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{flex:1;min-width:70px;background:var(--figma-color-bg-secondary);border-radius:var(--radius);padding:8px 10px;text-align:center}
+.chip .n{font-size:16px;font-weight:700;line-height:20px}
+.chip .l{font-size:10px;color:var(--figma-color-text-secondary)}
+.score .n{color:var(--figma-color-bg-brand)}
+
+/* issue list */
+.issues{display:flex;flex-direction:column;gap:6px}
+.issue{border:1px solid var(--figma-color-border);border-radius:var(--radius);padding:8px 10px;cursor:pointer}
+.issue:hover{background:var(--figma-color-bg-hover)}
+.issue .top{display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.dot.error{background:var(--figma-color-text-danger)}
+.dot.warn{background:var(--figma-color-text-warning)}
+.dot.info{background:var(--figma-color-text-secondary)}
+.issue .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.issue .msg{color:var(--figma-color-text-secondary);margin-top:3px;line-height:15px}
+.issue .sug{color:var(--figma-color-bg-brand);margin-top:3px}
+.empty{color:var(--figma-color-text-secondary);text-align:center;padding:24px 0}
+
+/* kit theme controls */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.ctl label{margin-bottom:5px}
+.color{display:flex;align-items:center;gap:8px;border:1px solid var(--figma-color-border);border-radius:var(--radius);padding:4px 6px}
+.color input[type=color]{width:22px;height:22px;border:0;padding:0;background:none;cursor:pointer}
+.color input[type=text]{border:0;background:none;color:var(--figma-color-text);font:inherit;width:100%;outline:none}
+input[type=text].box{width:100%;border:1px solid var(--figma-color-border);border-radius:var(--radius);padding:7px 8px;font:inherit;color:var(--figma-color-text);background:var(--figma-color-bg)}
+input[type=text].box:focus{outline:0;border-color:var(--figma-color-border-brand);box-shadow:0 0 0 1px var(--figma-color-border-brand) inset}
+
+.footer{flex:0 0 auto;border-top:1px solid var(--figma-color-border);padding:10px 16px;background:var(--figma-color-bg)}
+.status{color:var(--figma-color-text-secondary);min-height:15px;margin-bottom:8px;text-align:center}
+.status.ok{color:var(--figma-color-text-success)}
+.go{width:100%;border:0;border-radius:var(--radius);height:32px;background:var(--figma-color-bg-brand);color:var(--figma-color-text-onbrand);font:inherit;font-weight:600;cursor:pointer}
+.go:hover{background:var(--figma-color-bg-brand-hover)}
+.go:disabled{background:var(--figma-color-bg-disabled);color:var(--figma-color-text-ondisabled);cursor:default}
+</style></head><body>
+
+<div class="header">
+  <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+    <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+    <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+    <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+  </svg>
+  <h1>Component Manager</h1>
+  <span class="by">by sinhaankur</span>
+</div>
+
+<div class="body">
+  <div class="seg" role="tablist">
+    <button id="tabAudit" class="on" role="tab">Audit library</button>
+    <button id="tabKit" role="tab">Generate kit</button>
+  </div>
+
+  <!-- AUDIT -->
+  <div id="auditPane">
+    <p class="hint">Scan every component in this file for naming, grouping and duplicate issues, and get a health score. Click an issue to jump to it.</p>
+    <div id="auditOut"><div class="empty">Press <b>Run audit</b> to scan the file.</div></div>
+  </div>
+
+  <!-- KIT -->
+  <div id="kitPane" class="hidden">
+    <p class="hint">Generate a starter UX kit — real components (buttons, inputs, card, badge…) plus colour &amp; text styles — from your theme.</p>
+    <div class="grid">
+      <div class="ctl"><label>Accent</label><div class="color"><input type="color" id="cAccent" value="#F43F5E"><input type="text" id="tAccent" value="#F43F5E"></div></div>
+      <div class="ctl"><label>Text</label><div class="color"><input type="color" id="cFg" value="#0E0F13"><input type="text" id="tFg" value="#0E0F13"></div></div>
+      <div class="ctl"><label>Surface</label><div class="color"><input type="color" id="cBg" value="#FFFFFF"><input type="text" id="tBg" value="#FFFFFF"></div></div>
+      <div class="ctl"><label>Muted / border</label><div class="color"><input type="color" id="cMuted" value="#9AA0AA"><input type="text" id="tMuted" value="#9AA0AA"></div></div>
+    </div>
+    <div class="grid">
+      <div class="ctl"><label>Font family</label><input type="text" class="box" id="font" value="Inter"></div>
+      <div class="ctl"><label>Corner radius</label><input type="text" class="box" id="radius" value="10"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="status" id="status"></div>
+  <button class="go" id="go">Run audit</button>
+</div>
+
+<script>"use strict";
+(() => {
+  // src/ui.ts
+  var el = (id) => document.getElementById(id);
+  var statusEl = el("status");
+  var go = el("go");
+  var tab = "audit";
+  function setTab(t) {
+    tab = t;
+    el("tabAudit").classList.toggle("on", t === "audit");
+    el("tabKit").classList.toggle("on", t === "kit");
+    el("auditPane").classList.toggle("hidden", t !== "audit");
+    el("kitPane").classList.toggle("hidden", t !== "kit");
+    go.textContent = t === "audit" ? "Run audit" : "Generate kit";
+    setStatus("");
+  }
+  el("tabAudit").addEventListener("click", () => setTab("audit"));
+  el("tabKit").addEventListener("click", () => setTab("kit"));
+  function setStatus(text, ok = false) {
+    statusEl.textContent = text;
+    statusEl.classList.toggle("ok", ok);
+  }
+  [["cAccent", "tAccent"], ["cFg", "tFg"], ["cBg", "tBg"], ["cMuted", "tMuted"]].forEach(([c, t]) => {
+    const cc = el(c), tt = el(t);
+    cc.addEventListener("input", () => tt.value = cc.value.toUpperCase());
+    tt.addEventListener("input", () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(tt.value)) cc.value = tt.value;
+    });
+  });
+  go.addEventListener("click", () => {
+    if (tab === "audit") {
+      setStatus("Scanning components\u2026");
+      parent.postMessage({ pluginMessage: { type: "audit" } }, "*");
+    } else {
+      const theme = {
+        accent: el("tAccent").value.trim() || "#F43F5E",
+        fg: el("tFg").value.trim() || "#0E0F13",
+        bg: el("tBg").value.trim() || "#FFFFFF",
+        muted: el("tMuted").value.trim() || "#9AA0AA",
+        radius: parseInt(el("radius").value, 10) || 10,
+        fontFamily: el("font").value.trim() || "Inter"
+      };
+      setStatus("Generating kit\u2026");
+      parent.postMessage({ pluginMessage: { type: "generate", theme } }, "*");
+    }
+  });
+  function renderAudit(summary, issues) {
+    const out = el("auditOut");
+    const sev = (s) => issues.filter((i) => i.severity === s).length;
+    const chips = `
+    <div class="summary">
+      <div class="chip score"><div class="n">${summary.score}</div><div class="l">health</div></div>
+      <div class="chip"><div class="n">${summary.components}</div><div class="l">components</div></div>
+      <div class="chip"><div class="n">${summary.variants}</div><div class="l">variants</div></div>
+      <div class="chip"><div class="n">${sev("error")}</div><div class="l">errors</div></div>
+      <div class="chip"><div class="n">${sev("warn")}</div><div class="l">warnings</div></div>
+    </div>`;
+    if (!issues.length) {
+      out.innerHTML = chips + `<div class="empty">${summary.components ? "No issues \u2014 clean library \u2713" : "No components in this file yet."}</div>`;
+      return;
+    }
+    const rows = issues.map((i) => `
+    <div class="issue" data-id="${i.id}">
+      <div class="top"><span class="dot ${i.severity}"></span><span class="name">${esc(i.name || "(unnamed)")}</span></div>
+      <div class="msg">${esc(i.message)}</div>
+      ${i.suggestion ? `<div class="sug">\u2192 ${esc(i.suggestion)}</div>` : ""}
+    </div>`).join("");
+    out.innerHTML = chips + `<div class="issues">${rows}</div>`;
+    out.querySelectorAll(".issue").forEach((row) => row.addEventListener("click", () => parent.postMessage({ pluginMessage: { type: "select", id: row.dataset.id } }, "*")));
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  }
+  onmessage = (e) => {
+    const m = e.data.pluginMessage;
+    if (!m) return;
+    if (m.type === "audit-result") {
+      renderAudit(m.summary, m.issues);
+      setStatus(m.issues.length ? `${m.issues.length} issue${m.issues.length > 1 ? "s" : ""} found` : "Clean \u2713", !m.issues.length);
+    }
+    if (m.type === "gen-progress") setStatus(`Building\u2026 ${m.done}/${m.total}`);
+    if (m.type === "gen-done") setStatus(`Created ${m.components} components \xB7 ${m.colors} colour + ${m.textStyles} text styles \u2713`, true);
+    if (m.type === "error") setStatus(m.message);
+  };
+})();
+</script>
+</body></html>

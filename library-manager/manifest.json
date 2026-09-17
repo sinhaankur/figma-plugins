@@ -1,0 +1,13 @@
+{
+  "name": "Component Manager — by sinhaankur",
+  "id": "sinhaankur-component-manager",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "networkAccess": { "allowedDomains": ["none"] },
+  "permissions": [],
+  "relaunchButtons": [
+    { "command": "open", "name": "Component Manager" }
+  ]
+}
