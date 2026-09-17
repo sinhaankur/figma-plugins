@@ -43,19 +43,36 @@ iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;borde
   </div>
   <p class="sub">Turn a live URL or pasted HTML into <b style="color:var(--fg)">editable</b> Figma layers — real frames, text and fills from the computed CSS. Runs on your device.</p>
 
-  <div class="tabs"><button id="tabHtml" class="on">Paste HTML</button><button id="tabUrl">From URL</button></div>
+  <div class="tabs"><button id="tabReceive" class="on">Receive</button><button id="tabHtml">Paste HTML</button><button id="tabUrl">From URL</button></div>
 
-  <div id="htmlPane" class="field">
+  <div id="receivePane" class="field">
+    <label>Captured layout (from the bookmarklet)</label>
+    <textarea id="captured" placeholder="Paste here (⌘V) after clicking the 'Send to Figma' bookmarklet on your page…"></textarea>
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;color:var(--accent2);font-size:11px;font-weight:700">How to get the bookmarklet ▾</summary>
+      <div style="color:var(--muted);font-size:11px;line-height:1.7;margin-top:8px">
+        <b style="color:var(--fg)">One-time setup:</b> drag this button to your browser's bookmarks bar →
+        <a id="bmlink" href="#" style="display:inline-block;margin:4px 0;background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;text-decoration:none;font-weight:700;cursor:grab">↝ Send to Figma</a><br>
+        (or copy the code: <a id="bmcopy" href="#" style="color:var(--accent2)">copy bookmarklet</a>)
+        <br><br>
+        <b style="color:var(--fg)">Each time:</b> 1) open your page in the browser so it fully renders ·
+        2) click <b>Send to Figma</b> (it copies the layout) · 3) come back here and paste (⌘V) · 4) hit Import.
+      </div>
+    </details>
+  </div>
+
+  <div id="htmlPane" class="field hidden">
     <label>HTML</label>
     <textarea id="html" placeholder="Paste a page's HTML (Cmd-A, Cmd-C in the browser's Elements panel, or full page source)…"></textarea>
+    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Best for simple static pages. For JS-rendered / bundled pages (Claude designs, SPAs) use <b style="color:var(--fg)">Receive</b> — it captures the page after it renders.</p>
   </div>
   <div id="urlPane" class="field hidden">
     <label>URL</label>
     <input type="text" id="url" placeholder="https://sinhaankur.com" />
-    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Some sites block cross-origin fetch — if it fails, switch to Paste HTML.</p>
+    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Many sites block cross-origin fetch, and JS-rendered pages won't render here. If it fails, use <b style="color:var(--fg)">Receive</b>.</p>
   </div>
 
-  <div class="opts">
+  <div class="opts" id="widthOpts" style="display:none">
     <div class="w"><label style="margin:0">Width</label><input type="text" id="width" value="1056" /></div>
     <div class="pills">
       <span class="pill" data-w="390">390</span>
@@ -67,7 +84,7 @@ iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;borde
   <button class="go" id="go">Import to Figma</button>
   <div class="status" id="status"></div>
 
-  <p class="note"><b>Editable, not a screenshot.</b> Each element becomes a real Figma layer positioned from its on-page box. Complex effects (gradients, canvas, shadows) may simplify. Free &amp; open source — by <b>sinhaankur</b>.</p>
+  <p class="note"><b>Editable, not a screenshot.</b> Each element becomes a real Figma layer positioned from its on-page box. <b>Receive</b> captures the live rendered page (handles JS/bundled designs + images); Paste HTML / From URL are for simple static pages. Free &amp; open source — by <b>sinhaankur</b>.</p>
 </div>
 <iframe id="stage" sandbox="allow-same-origin"></iframe>
 <script>"use strict";
@@ -145,16 +162,32 @@ iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;borde
   var el = (id) => document.getElementById(id);
   var stage = el("stage");
   var status = el("status");
-  var mode = "html";
+  var mode = "receive";
+  var BOOKMARKLET = true ? "javascript:(async%20function()%7B%22use%20strict%22%3Bvar%20z%3D2e3%3Bfunction%20v(n%2Ca)%7Bvar%20e%3Ddocument.getElementById(%22__f2f_toast%22)%3Be%7C%7C(e%3Ddocument.createElement(%22div%22)%2Ce.id%3D%22__f2f_toast%22%2Ce.style.cssText%3D%22position%3Afixed%3Bz-index%3A2147483647%3Bleft%3A50%25%3Bbottom%3A24px%3Btransform%3AtranslateX(-50%25)%3Bbackground%3A%2316181f%3Bcolor%3A%23f3f4f6%3Bfont%3A13px%2F1.4%20-apple-system%2Csystem-ui%2Csans-serif%3Bpadding%3A12px%2018px%3Bborder-radius%3A12px%3Bbox-shadow%3A0%208px%2030px%20rgba(0%2C0%2C0%2C.45)%3Bborder%3A1px%20solid%20rgba(255%2C255%2C255%2C.1)%3Bmax-width%3A80vw%22%2Cdocument.body.appendChild(e))%2Ce.style.borderColor%3Da%3F%22rgba(52%2C211%2C153%2C.5)%22%3A%22rgba(255%2C255%2C255%2C.1)%22%2Ce.textContent%3Dn%7Dfunction%20x(n)%7Breturn%20Math.max(0%2CMath.min(1%2Cn))%7Dfunction%20p(n)%7Bvar%20a%3DparseFloat(String(n).replace(%22px%22%2C%22%22))%3Breturn%20isFinite(a)%3Fa%3A0%7Dfunction%20m(n)%7Bif(!n)return%20null%3Bvar%20a%3Dn.trim().toLowerCase()%3Bif(a%3D%3D%3D%22transparent%22%7C%7Ca%3D%3D%3D%22none%22)return%20null%3Bvar%20e%3Da.match(%2F%5Ergba%3F%5C((%5B%5E)%5D%2B)%5C)%24%2F)%3Bif(e)%7Bvar%20t%3De%5B1%5D.split(%2F%5B%2C%5C%2F%5Cs%5D%2B%2F).filter(Boolean)%2Ci%3Dt%5B3%5D!%3Dnull%3Fx(parseFloat(t%5B3%5D))%3A1%3Breturn%20i%3D%3D%3D0%3Fnull%3A%7Br%3Ax(%2Bt%5B0%5D%2F255)%2Cg%3Ax(%2Bt%5B1%5D%2F255)%2Cb%3Ax(%2Bt%5B2%5D%2F255)%2Ca%3Ai%7D%7Dif(e%3Da.match(%2F%5E%23(%5B0-9a-f%5D%7B3%2C8%7D)%24%2F)%2Ce)%7Bvar%20r%3De%5B1%5D%2Co%3Dfunction(l%2Cd)%7Breturn%20parseInt(d%3D%3D%3D1%3Fr%5Bl%5D%2Br%5Bl%5D%3Ar.slice(l%2Cl%2B2)%2C16)%2F255%7D%3Bif(r.length%3D%3D%3D3)return%7Br%3Ao(0%2C1)%2Cg%3Ao(1%2C1)%2Cb%3Ao(2%2C1)%2Ca%3A1%7D%3Bif(r.length%3D%3D%3D6)return%7Br%3Ao(0%2C2)%2Cg%3Ao(2%2C2)%2Cb%3Ao(4%2C2)%2Ca%3A1%7D%3Bif(r.length%3D%3D%3D8)%7Bvar%20u%3Do(6%2C2)%3Breturn%20u%3D%3D%3D0%3Fnull%3A%7Br%3Ao(0%2C2)%2Cg%3Ao(2%2C2)%2Cb%3Ao(4%2C2)%2Ca%3Au%7D%7D%7Dreturn%20null%7Dfunction%20X(n%2Ca)%7Bvar%20e%3DparseInt(n%2C10)%7C%7C400%2Ct%3De%3E%3D800%3F%22Black%22%3Ae%3E%3D700%3F%22Bold%22%3Ae%3E%3D600%3F%22SemiBold%22%3Ae%3E%3D500%3F%22Medium%22%3Ae%3C%3D300%3F%22Light%22%3A%22Regular%22%3Breturn%20a%3Ft%3D%3D%3D%22Regular%22%3F%22Italic%22%3At%2B%22%20Italic%22%3At%7Dfunction%20%24(n)%7Bswitch((n%7C%7C%22%22).toLowerCase())%7Bcase%22center%22%3Areturn%22CENTER%22%3Bcase%22right%22%3Acase%22end%22%3Areturn%22RIGHT%22%3Bcase%22justify%22%3Areturn%22JUSTIFIED%22%3Bdefault%3Areturn%22LEFT%22%7D%7Dfunction%20A(n)%7Breturn%20Math.max(0%2Cp((n%7C%7C%220%22).split(%2F%5Cs%2B%2F)%5B0%5D))%7Dfunction%20P(n)%7Bif(!n%7C%7Cn%3D%3D%3D%22none%22)return%20null%3Bvar%20a%3Dm(n)%7C%7C%7Br%3A0%2Cg%3A0%2Cb%3A0%2Ca%3A.25%7D%2Ce%3Dn.match(%2F-%3F%5B%5Cd.%5D%2Bpx%2Fg)%3Bif(!e%7C%7Ce.length%3C2)return%20null%3Bvar%20t%3De.map(function(i)%7Breturn%20parseFloat(i)%7D)%3Breturn%7Bx%3At%5B0%5D%2Cy%3At%5B1%5D%2Cblur%3At%5B2%5D%7C%7C0%2Cspread%3At%5B3%5D%7C%7C0%2Ccolor%3Aa%7D%7Dfunction%20H(n%2Ca%2Ce)%7Breturn%20new%20Promise(function(t)%7Btry%7Blet%20r%3Dfunction()%7Btry%7Bvar%20o%3Di.naturalWidth%7C%7Ca%2Cu%3Di.naturalHeight%7C%7Ce%2Cl%3DMath.min(1%2Cz%2FMath.max(o%2Cu))%2Cd%3DMath.max(1%2CMath.round(o*l))%2Cc%3DMath.max(1%2CMath.round(u*l))%2Cf%3Ddocument.createElement(%22canvas%22)%3Bf.width%3Dd%2Cf.height%3Dc%2Cf.getContext(%222d%22).drawImage(i%2C0%2C0%2Cd%2Cc)%2Ct(f.toDataURL(%22image%2Fpng%22))%7Dcatch%7Bt(null)%7D%7D%3Bvar%20i%3Btypeof%20n%3D%3D%22string%22%3F(i%3Dnew%20Image%2Ci.crossOrigin%3D%22anonymous%22%2Ci.onload%3Dr%2Ci.onerror%3Dfunction()%7Bt(null)%7D%2Ci.src%3Dn)%3A(i%3Dn%2Ci.complete%26%26i.naturalWidth%3Fr()%3A(i.onload%3Dr%2Ci.onerror%3Dfunction()%7Bt(null)%7D))%7Dcatch%7Bt(null)%7D%7D)%7Dfunction%20U(n)%7Bvar%20a%3Dn.backgroundImage%3Bif(!a%7C%7Ca%3D%3D%3D%22none%22)return%20null%3Bvar%20e%3Da.match(%2Furl%5C(%5B%22'%5D%3F(%5B%5E%22')%5D%2B)%5B%22'%5D%3F%5C)%2Fi)%3Breturn%20e%3Fe%5B1%5D%3Anull%7Dvar%20j%3Dwindow.scrollX%2CG%3Dwindow.scrollY%2Cy%3D%5B%5D%3Bfunction%20J(n)%7Bfor(var%20a%3D%22%22%2Ce%3D0%3Be%3Cn.childNodes.length%3Be%2B%2B)%7Bvar%20t%3Dn.childNodes%5Be%5D%3Bt.nodeType%3D%3D%3D3%26%26(a%2B%3Dt.textContent%7C%7C%22%22)%7Dreturn%20a.replace(%2F%5Cs%2B%2Fg%2C%22%20%22).trim()%7Dfunction%20W(n%2Ca)%7Bfor(var%20e%3D0%3Be%3Cn.children.length%3Be%2B%2B)%7Bvar%20t%3Dn.children%5Be%5D%2Ci%3Dt.tagName.toLowerCase()%3Bif(!(i%3D%3D%3D%22script%22%7C%7Ci%3D%3D%3D%22style%22%7C%7Ci%3D%3D%3D%22noscript%22%7C%7Ci%3D%3D%3D%22template%22))%7Bvar%20r%3DgetComputedStyle(t)%3Bif(!(r.display%3D%3D%3D%22none%22%7C%7Cr.visibility%3D%3D%3D%22hidden%22%7C%7CparseFloat(r.opacity)%3D%3D%3D0))%7Bvar%20o%3Dt.getBoundingClientRect()%2Cu%3Do.width%2Cl%3Do.height%3Bif(!(u%3C%3D0%7C%7Cl%3C%3D0))%7Bvar%20d%3Do.left%2Bj%2Cc%3Do.top%2BG%2Cf%3Dm(r.backgroundColor)%2Ck%3Dp(r.borderTopWidth)%2CB%3Dk%3E0%3Fm(r.borderTopColor)%3Anull%2CC%3DA(r.borderTopLeftRadius)%2CN%3DP(r.boxShadow)%2CS%3DparseFloat(r.opacity)%3Bif(i%3D%3D%3D%22img%22%26%26t.src)%7B(function(R%2CT%2Cg%2Ch%2CI%2CL%2CE)%7By.push(H(t%2Cg%2Ch).then(function(s)%7Ba.push(%7Bkind%3As%3F%22image%22%3A%22rect%22%2Cname%3A%22img%22%2B(I%3F%22%23%22%2BI%3A%22%22)%2Cx%3AR%2Cy%3AT%2Cw%3Ag%2Ch%2Cradius%3AL%2Copacity%3AE%2Cfill%3As%3Fnull%3A%7Br%3A.85%2Cg%3A.85%2Cb%3A.87%2Ca%3A1%7D%2CimageDataURL%3As%7C%7Cvoid%200%7D)%7D))%7D)(d%2Cc%2Cu%2Cl%2Ct.id%2CC%2CS)%3Bcontinue%7Dvar%20D%3DU(r)%3BD%26%26function(R%2CT%2Cg%2Ch%2CI%2CL%2CE)%7By.push(H(E%2Cg%2Ch).then(function(s)%7Bs%26%26a.push(%7Bkind%3A%22image%22%2Cname%3A%22bg%22%2Cx%3AR%2Cy%3AT%2Cw%3Ag%2Ch%2Cradius%3AI%2Copacity%3AL%2CimageDataURL%3As%7D)%7D))%7D(d%2Cc%2Cu%2Cl%2CC%2CS%2CD)%2C(f%7C%7CB%7C%7CC%3E0%7C%7CN)%26%26a.push(%7Bkind%3A%22rect%22%2Cname%3Ai%2B(t.id%3F%22%23%22%2Bt.id%3A%22%22)%2Cx%3Ad%2Cy%3Ac%2Cw%3Au%2Ch%3Al%2Cfill%3Af%7C%7Cnull%2Cstroke%3AB%2CstrokeWidth%3Ak%2Cradius%3AC%2Copacity%3AS%2Cshadow%3AN%7D)%3Bvar%20F%3DJ(t)%3BF%26%26a.push(%7Bkind%3A%22text%22%2Cname%3AF.slice(0%2C40)%2Cx%3Ad%2Cy%3Ac%2Cw%3Au%2Ch%3Al%2Ctext%3AF%2CfontSize%3Ap(r.fontSize)%7C%7C16%2CfontFamily%3A(r.fontFamily.split(%22%2C%22)%5B0%5D%7C%7C%22Inter%22).replace(%2F%5B%22'%5D%2Fg%2C%22%22).trim()%2CfontStyle%3AX(r.fontWeight%2Cr.fontStyle%3D%3D%3D%22italic%22)%2Ccolor%3Am(r.color)%2Calign%3A%24(r.textAlign)%2ClineHeight%3A%2Fpx%24%2F.test(r.lineHeight)%3Fp(r.lineHeight)%3Avoid%200%2CletterSpacing%3A%2Fpx%24%2F.test(r.letterSpacing)%3Fp(r.letterSpacing)%3Avoid%200%2Copacity%3AS%7D)%2CW(t%2Ca)%7D%7D%7D%7D%7Dv(%22Capturing%20page%5Cu2026%22)%3Bvar%20b%3Ddocument.body%2CY%3Dm(getComputedStyle(b).backgroundColor)%7C%7C%7Br%3A1%2Cg%3A1%2Cb%3A1%2Ca%3A1%7D%2CV%3DMath.max(document.documentElement.scrollWidth%2Cb.scrollWidth%2Cwindow.innerWidth)%2Cq%3DMath.max(document.documentElement.scrollHeight%2Cb.scrollHeight)%2CM%3D%5B%5D%3BW(b%2CM)%2Cv(%22Fetching%20%22%2By.length%2B%22%20images%5Cu2026%22)%2Cawait%20Promise.all(y)%3Bvar%20K%3D%7Bkind%3A%22frame%22%2Cname%3A(document.title%7C%7C%22Imported%20page%22).slice(0%2C60)%2Cx%3A0%2Cy%3A0%2Cw%3AV%2Ch%3Aq%2Cfill%3AY%2Cchildren%3AM%7D%2C_%3DJSON.stringify(%7B__f2f%3A1%2Ctree%3AK%7D)%3Btry%7Bawait%20navigator.clipboard.writeText(_)%2Cv(%22%5Cu2713%20Copied%20%22%2BM.length%2B%22%20layers.%20In%20Figma%3A%20HTML%5Cu2192Figma%20%5Cu2192%20Receive%20%5Cu2192%20Paste%20(%5Cu2318V).%22%2C!0)%7Dcatch%7Bvar%20w%3Ddocument.createElement(%22textarea%22)%3Bw.value%3D_%2Cw.style.cssText%3D%22position%3Afixed%3Bz-index%3A2147483647%3Bleft%3A50%25%3Btop%3A50%25%3Btransform%3Atranslate(-50%25%2C-50%25)%3Bwidth%3A60vw%3Bheight%3A40vh%22%2Cdocument.body.appendChild(w)%2Cw.select()%2Cv(%22Select-all%20%2B%20copy%20this%20box%2C%20then%20paste%20into%20Figma%20%5Cu2192%20Receive.%22%2C!0)%7D%7D)()%3B" : "";
+  el("tabReceive").addEventListener("click", () => setMode("receive"));
   el("tabHtml").addEventListener("click", () => setMode("html"));
   el("tabUrl").addEventListener("click", () => setMode("url"));
   function setMode(m) {
     mode = m;
+    el("tabReceive").classList.toggle("on", m === "receive");
     el("tabHtml").classList.toggle("on", m === "html");
     el("tabUrl").classList.toggle("on", m === "url");
+    el("receivePane").classList.toggle("hidden", m !== "receive");
     el("htmlPane").classList.toggle("hidden", m !== "html");
     el("urlPane").classList.toggle("hidden", m !== "url");
+    el("widthOpts").style.display = m === "receive" ? "none" : "flex";
   }
+  var bmlink = el("bmlink");
+  if (bmlink && BOOKMARKLET) bmlink.setAttribute("href", BOOKMARKLET);
+  el("bmcopy")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(BOOKMARKLET);
+      status.textContent = "Bookmarklet copied \u2014 make a new bookmark, paste as the URL.";
+    } catch {
+      status.textContent = "Copy failed \u2014 drag the button to your bookmarks bar instead.";
+    }
+  });
   document.querySelectorAll(".pill").forEach((pill) => pill.addEventListener("click", () => {
     document.querySelectorAll(".pill").forEach((p) => p.classList.remove("on"));
     pill.classList.add("on");
@@ -162,6 +195,28 @@ iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;borde
   }));
   el("go").addEventListener("click", run);
   async function run() {
+    if (mode === "receive") {
+      const raw = el("captured").value.trim();
+      if (!raw) {
+        status.textContent = "Paste the captured layout first (click the bookmarklet on your page).";
+        return;
+      }
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        status.textContent = "That doesn't look like captured JSON. Re-run the bookmarklet and paste again.";
+        return;
+      }
+      const tree = data && data.__f2f ? data.tree : data.tree || data;
+      if (!tree || !tree.children) {
+        status.textContent = "No layers found in the pasted data.";
+        return;
+      }
+      status.textContent = "Building Figma layers\u2026";
+      parent.postMessage({ pluginMessage: { type: "receive", tree } }, "*");
+      return;
+    }
     let html = "";
     if (mode === "html") {
       html = el("html").value.trim();

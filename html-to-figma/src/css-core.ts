@@ -85,6 +85,7 @@ export interface FigmaNode {
   letterSpacing?: number;
   // image
   imageBytes?: number[];        // PNG bytes (as array — postMessage-safe)
+  imageDataURL?: string;        // "data:image/png;base64,…" (from the bookmarklet)
   // effect
   shadow?: Shadow | null;
   children?: FigmaNode[];

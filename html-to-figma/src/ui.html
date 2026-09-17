@@ -43,19 +43,36 @@ iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;borde
   </div>
   <p class="sub">Turn a live URL or pasted HTML into <b style="color:var(--fg)">editable</b> Figma layers — real frames, text and fills from the computed CSS. Runs on your device.</p>
 
-  <div class="tabs"><button id="tabHtml" class="on">Paste HTML</button><button id="tabUrl">From URL</button></div>
+  <div class="tabs"><button id="tabReceive" class="on">Receive</button><button id="tabHtml">Paste HTML</button><button id="tabUrl">From URL</button></div>
 
-  <div id="htmlPane" class="field">
+  <div id="receivePane" class="field">
+    <label>Captured layout (from the bookmarklet)</label>
+    <textarea id="captured" placeholder="Paste here (⌘V) after clicking the 'Send to Figma' bookmarklet on your page…"></textarea>
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;color:var(--accent2);font-size:11px;font-weight:700">How to get the bookmarklet ▾</summary>
+      <div style="color:var(--muted);font-size:11px;line-height:1.7;margin-top:8px">
+        <b style="color:var(--fg)">One-time setup:</b> drag this button to your browser's bookmarks bar →
+        <a id="bmlink" href="#" style="display:inline-block;margin:4px 0;background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;text-decoration:none;font-weight:700;cursor:grab">↝ Send to Figma</a><br>
+        (or copy the code: <a id="bmcopy" href="#" style="color:var(--accent2)">copy bookmarklet</a>)
+        <br><br>
+        <b style="color:var(--fg)">Each time:</b> 1) open your page in the browser so it fully renders ·
+        2) click <b>Send to Figma</b> (it copies the layout) · 3) come back here and paste (⌘V) · 4) hit Import.
+      </div>
+    </details>
+  </div>
+
+  <div id="htmlPane" class="field hidden">
     <label>HTML</label>
     <textarea id="html" placeholder="Paste a page's HTML (Cmd-A, Cmd-C in the browser's Elements panel, or full page source)…"></textarea>
+    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Best for simple static pages. For JS-rendered / bundled pages (Claude designs, SPAs) use <b style="color:var(--fg)">Receive</b> — it captures the page after it renders.</p>
   </div>
   <div id="urlPane" class="field hidden">
     <label>URL</label>
     <input type="text" id="url" placeholder="https://sinhaankur.com" />
-    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Some sites block cross-origin fetch — if it fails, switch to Paste HTML.</p>
+    <p style="color:var(--muted);font-size:10px;margin:6px 0 0">Many sites block cross-origin fetch, and JS-rendered pages won't render here. If it fails, use <b style="color:var(--fg)">Receive</b>.</p>
   </div>
 
-  <div class="opts">
+  <div class="opts" id="widthOpts" style="display:none">
     <div class="w"><label style="margin:0">Width</label><input type="text" id="width" value="1056" /></div>
     <div class="pills">
       <span class="pill" data-w="390">390</span>
@@ -67,7 +84,7 @@ iframe#stage{position:fixed;left:-99999px;top:0;width:1056px;height:2000px;borde
   <button class="go" id="go">Import to Figma</button>
   <div class="status" id="status"></div>
 
-  <p class="note"><b>Editable, not a screenshot.</b> Each element becomes a real Figma layer positioned from its on-page box. Complex effects (gradients, canvas, shadows) may simplify. Free &amp; open source — by <b>sinhaankur</b>.</p>
+  <p class="note"><b>Editable, not a screenshot.</b> Each element becomes a real Figma layer positioned from its on-page box. <b>Receive</b> captures the live rendered page (handles JS/bundled designs + images); Paste HTML / From URL are for simple static pages. Free &amp; open source — by <b>sinhaankur</b>.</p>
 </div>
 <iframe id="stage" sandbox="allow-same-origin"></iframe>
 <script src="ui.js"></script>

@@ -13,17 +13,36 @@ import {
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = el<HTMLIFrameElement>("stage");
 const status = el("status");
-let mode: "html" | "url" = "html";
+type Mode = "receive" | "html" | "url";
+let mode: Mode = "receive";
 
+// The minified bookmarklet is injected at build time as __BOOKMARKLET__.
+declare const __BOOKMARKLET__: string;
+const BOOKMARKLET = typeof __BOOKMARKLET__ === "string" ? __BOOKMARKLET__ : "";
+
+el("tabReceive").addEventListener("click", () => setMode("receive"));
 el("tabHtml").addEventListener("click", () => setMode("html"));
 el("tabUrl").addEventListener("click", () => setMode("url"));
-function setMode(m: "html" | "url") {
+function setMode(m: Mode) {
   mode = m;
+  el("tabReceive").classList.toggle("on", m === "receive");
   el("tabHtml").classList.toggle("on", m === "html");
   el("tabUrl").classList.toggle("on", m === "url");
+  el("receivePane").classList.toggle("hidden", m !== "receive");
   el("htmlPane").classList.toggle("hidden", m !== "html");
   el("urlPane").classList.toggle("hidden", m !== "url");
+  // width picker only matters for the (re-)render modes
+  el("widthOpts").style.display = m === "receive" ? "none" : "flex";
 }
+
+// Wire the bookmarklet drag/copy links.
+const bmlink = el<HTMLAnchorElement>("bmlink");
+if (bmlink && BOOKMARKLET) bmlink.setAttribute("href", BOOKMARKLET);
+el("bmcopy")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  try { await navigator.clipboard.writeText(BOOKMARKLET); status.textContent = "Bookmarklet copied — make a new bookmark, paste as the URL."; }
+  catch { status.textContent = "Copy failed — drag the button to your bookmarks bar instead."; }
+});
 
 // width preset pills
 document.querySelectorAll<HTMLElement>(".pill").forEach((pill) =>
@@ -36,6 +55,18 @@ document.querySelectorAll<HTMLElement>(".pill").forEach((pill) =>
 el("go").addEventListener("click", run);
 
 async function run() {
+  if (mode === "receive") {
+    const raw = (el<HTMLTextAreaElement>("captured")).value.trim();
+    if (!raw) { status.textContent = "Paste the captured layout first (click the bookmarklet on your page)."; return; }
+    let data: any;
+    try { data = JSON.parse(raw); }
+    catch { status.textContent = "That doesn't look like captured JSON. Re-run the bookmarklet and paste again."; return; }
+    const tree = data && data.__f2f ? data.tree : data.tree || data;
+    if (!tree || !tree.children) { status.textContent = "No layers found in the pasted data."; return; }
+    status.textContent = "Building Figma layers…";
+    parent.postMessage({ pluginMessage: { type: "receive", tree } }, "*");
+    return;
+  }
   let html = "";
   if (mode === "html") {
     html = (el<HTMLTextAreaElement>("html")).value.trim();
