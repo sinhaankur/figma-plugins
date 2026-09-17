@@ -130,6 +130,7 @@
       var child = node.children[i];
       var tag = child.tagName.toLowerCase();
       if (tag === "script" || tag === "style" || tag === "noscript" || tag === "template") continue;
+      if (child.id === "__f2f_toast") continue; // don't capture our own status toast
       var st = getComputedStyle(child);
       if (st.display === "none" || st.visibility === "hidden" || parseFloat(st.opacity) === 0) continue;
       var rect = child.getBoundingClientRect();

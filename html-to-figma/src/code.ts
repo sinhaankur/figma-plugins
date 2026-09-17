@@ -9,26 +9,29 @@ import type { FigmaNode, RGBA } from "./css-core";
 
 figma.showUI(__html__, { width: 460, height: 620, themeColors: true });
 
+type ImportOpts = { group?: boolean; layoutHint?: boolean };
 type UIMsg =
-  | { type: "import"; tree: FigmaNode }   // legacy in-plugin render
-  | { type: "receive"; tree: FigmaNode }  // from the "Send to Figma" bookmarklet
+  | { type: "import"; tree: FigmaNode; opts?: ImportOpts }   // legacy in-plugin render
+  | { type: "receive"; tree: FigmaNode; opts?: ImportOpts }  // from the bookmarklet
   | { type: "close" };
 
 figma.ui.onmessage = async (msg: UIMsg) => {
   if (msg.type === "close") return figma.closePlugin();
   if (msg.type === "import" || msg.type === "receive") {
-    try { await build(msg.tree); }
+    try { await build(msg.tree, msg.opts || {}); }
     catch (e: any) { figma.notify("Import failed: " + (e && e.message ? e.message : e)); }
   }
 };
 
 const loaded = new Set<string>();
+const missingFonts = new Set<string>();
 async function ensureFont(family: string, style: string): Promise<FontName> {
   const key = `${family}__${style}`;
   const font: FontName = { family, style };
   if (loaded.has(key)) return font;
   try { await figma.loadFontAsync(font); loaded.add(key); return font; }
   catch {
+    missingFonts.add(family);
     const fb: FontName = { family: "Inter", style: styleFallback(style) };
     const fbKey = `Inter__${fb.style}`;
     if (!loaded.has(fbKey)) { try { await figma.loadFontAsync(fb); } catch { fb.style = "Regular"; await figma.loadFontAsync(fb); } loaded.add(fbKey); }
@@ -48,7 +51,8 @@ function styleFallback(style: string): string {
 
 const solid = (c: RGBA): SolidPaint => ({ type: "SOLID", color: { r: c.r, g: c.g, b: c.b }, opacity: c.a });
 
-async function build(tree: FigmaNode) {
+async function build(tree: FigmaNode, opts: ImportOpts) {
+  missingFonts.clear();
   // count for progress
   let total = 0; const count = (n: FigmaNode) => { total++; n.children?.forEach(count); }; count(tree);
   let done = 0;
@@ -68,10 +72,24 @@ async function build(tree: FigmaNode) {
     done++; if (done % 25 === 0) figma.ui.postMessage({ type: "progress", done, total });
   }
 
-  figma.currentPage.selection = [page];
-  figma.viewport.scrollAndZoomIntoView([page]);
-  figma.ui.postMessage({ type: "done", count: total });
-  figma.notify(`HTML imported — ${total} editable layers ✎`);
+  // "Group into one frame" (default): keep the container frame. When off, release
+  // the children onto the canvas and remove the wrapper so they're loose layers.
+  let selection: SceneNode[] = [page];
+  if (opts.group === false) {
+    const kids = [...page.children];
+    for (const k of kids) { figma.currentPage.appendChild(k); }
+    page.remove();
+    selection = kids;
+  }
+
+  figma.currentPage.selection = selection;
+  figma.viewport.scrollAndZoomIntoView(selection);
+  const missing = Array.from(missingFonts);
+  figma.ui.postMessage({ type: "done", count: total, missingFonts: missing });
+  figma.notify(
+    `HTML imported — ${total} editable layers ✎` +
+    (missing.length ? ` · ${missing.length} font(s) → Inter` : "")
+  );
 }
 
 async function addNode(n: FigmaNode, parent: FrameNode, ox: number, oy: number) {

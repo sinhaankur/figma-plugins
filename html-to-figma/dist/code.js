@@ -6,13 +6,14 @@
     if (msg.type === "close") return figma.closePlugin();
     if (msg.type === "import" || msg.type === "receive") {
       try {
-        await build(msg.tree);
+        await build(msg.tree, msg.opts || {});
       } catch (e) {
         figma.notify("Import failed: " + (e && e.message ? e.message : e));
       }
     }
   };
   var loaded = /* @__PURE__ */ new Set();
+  var missingFonts = /* @__PURE__ */ new Set();
   async function ensureFont(family, style) {
     const key = `${family}__${style}`;
     const font = { family, style };
@@ -22,6 +23,7 @@
       loaded.add(key);
       return font;
     } catch {
+      missingFonts.add(family);
       const fb = { family: "Inter", style: styleFallback(style) };
       const fbKey = `Inter__${fb.style}`;
       if (!loaded.has(fbKey)) {
@@ -47,7 +49,8 @@
     return "Regular";
   }
   var solid = (c) => ({ type: "SOLID", color: { r: c.r, g: c.g, b: c.b }, opacity: c.a });
-  async function build(tree) {
+  async function build(tree, opts) {
+    missingFonts.clear();
     let total = 0;
     const count = (n) => {
       var _a;
@@ -69,10 +72,22 @@
       done++;
       if (done % 25 === 0) figma.ui.postMessage({ type: "progress", done, total });
     }
-    figma.currentPage.selection = [page];
-    figma.viewport.scrollAndZoomIntoView([page]);
-    figma.ui.postMessage({ type: "done", count: total });
-    figma.notify(`HTML imported \u2014 ${total} editable layers \u270E`);
+    let selection = [page];
+    if (opts.group === false) {
+      const kids = [...page.children];
+      for (const k of kids) {
+        figma.currentPage.appendChild(k);
+      }
+      page.remove();
+      selection = kids;
+    }
+    figma.currentPage.selection = selection;
+    figma.viewport.scrollAndZoomIntoView(selection);
+    const missing = Array.from(missingFonts);
+    figma.ui.postMessage({ type: "done", count: total, missingFonts: missing });
+    figma.notify(
+      `HTML imported \u2014 ${total} editable layers \u270E` + (missing.length ? ` \xB7 ${missing.length} font(s) \u2192 Inter` : "")
+    );
   }
   async function addNode(n, parent, ox, oy) {
     if (n.kind === "text" && n.text) {

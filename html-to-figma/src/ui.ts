@@ -33,6 +33,17 @@ function setMode(m: Mode) {
   el("urlPane").classList.toggle("hidden", m !== "url");
   // width picker only matters for the (re-)render modes
   el("widthOpts").style.display = m === "receive" ? "none" : "flex";
+  try { localStorage.setItem("f2f_mode", m); } catch {}
+}
+
+function setStatus(text: string, ok = false) {
+  status.textContent = text;
+  status.classList.toggle("ok", ok);
+}
+function importOptions() {
+  return {
+    group: (el<HTMLInputElement>("optGroup"))?.checked ?? true,
+  };
 }
 
 // Wire the bookmarklet drag/copy links.
@@ -44,48 +55,55 @@ el("bmcopy")?.addEventListener("click", async (e) => {
   catch { status.textContent = "Copy failed — drag the button to your bookmarks bar instead."; }
 });
 
-// width preset pills
-document.querySelectorAll<HTMLElement>(".pill").forEach((pill) =>
-  pill.addEventListener("click", () => {
-    document.querySelectorAll(".pill").forEach((p) => p.classList.remove("on"));
-    pill.classList.add("on");
-    (el<HTMLInputElement>("width")).value = pill.dataset.w!;
+// width preset segments
+document.querySelectorAll<HTMLElement>(".seg-inline span").forEach((seg) =>
+  seg.addEventListener("click", () => {
+    document.querySelectorAll(".seg-inline span").forEach((p) => p.classList.remove("on"));
+    seg.classList.add("on");
+    (el<HTMLInputElement>("width")).value = seg.dataset.w!;
   }));
+
+// remember the last mode across sessions
+try {
+  const last = localStorage.getItem("f2f_mode") as Mode | null;
+  if (last) setMode(last);
+} catch {}
 
 el("go").addEventListener("click", run);
 
 async function run() {
+  const opts = importOptions();
   if (mode === "receive") {
     const raw = (el<HTMLTextAreaElement>("captured")).value.trim();
-    if (!raw) { status.textContent = "Paste the captured layout first (click the bookmarklet on your page)."; return; }
+    if (!raw) { setStatus("Paste the captured layout first (click the bookmarklet on your page)."); return; }
     let data: any;
     try { data = JSON.parse(raw); }
-    catch { status.textContent = "That doesn't look like captured JSON. Re-run the bookmarklet and paste again."; return; }
+    catch { setStatus("That doesn't look like captured JSON. Re-run the bookmarklet and paste again."); return; }
     const tree = data && data.__f2f ? data.tree : data.tree || data;
-    if (!tree || !tree.children) { status.textContent = "No layers found in the pasted data."; return; }
-    status.textContent = "Building Figma layers…";
-    parent.postMessage({ pluginMessage: { type: "receive", tree } }, "*");
+    if (!tree || !tree.children) { setStatus("No layers found in the pasted data."); return; }
+    setStatus("Building Figma layers…");
+    parent.postMessage({ pluginMessage: { type: "receive", tree, opts } }, "*");
     return;
   }
   let html = "";
   if (mode === "html") {
     html = (el<HTMLTextAreaElement>("html")).value.trim();
-    if (!html) { status.textContent = "Paste some HTML first."; return; }
+    if (!html) { setStatus("Paste some HTML first."); return; }
   } else {
     const url = (el<HTMLInputElement>("url")).value.trim();
-    if (!url) { status.textContent = "Enter a URL."; return; }
-    status.textContent = "Fetching page…";
+    if (!url) { setStatus("Enter a URL."); return; }
+    setStatus("Fetching page…");
     try {
       const res = await fetch(url, { mode: "cors" });
       html = await res.text();
       html = absolutize(html, url); // best-effort fix relative asset URLs
     } catch (e: any) {
-      status.textContent = "Couldn't fetch (CORS?). Paste the HTML instead."; return;
+      setStatus("Couldn't fetch (CORS?). Paste the HTML instead."); return;
     }
   }
-  status.textContent = "Rendering…";
+  setStatus("Rendering…");
   const width = px((el<HTMLInputElement>("width")).value || "1056") || 1056;
-  await renderAndWalk(html, width);
+  await renderAndWalk(html, width, opts);
 }
 
 function absolutize(html: string, base: string): string {
@@ -96,7 +114,7 @@ function absolutize(html: string, base: string): string {
   } catch { return html; }
 }
 
-async function renderAndWalk(html: string, width: number) {
+async function renderAndWalk(html: string, width: number, opts: any) {
   const doc = stage.contentDocument!;
   stage.style.width = width + "px";
   doc.open(); doc.write(html); doc.close();
@@ -117,8 +135,8 @@ async function renderAndWalk(html: string, width: number) {
   walk(body, doc, nodes);
   root.children = nodes;
 
-  status.textContent = "Building Figma layers…";
-  parent.postMessage({ pluginMessage: { type: "import", tree: root } }, "*");
+  setStatus("Building Figma layers…");
+  parent.postMessage({ pluginMessage: { type: "import", tree: root, opts } }, "*");
 }
 
 // Walk visible elements; emit a box node for painted elements and a text node for
@@ -187,6 +205,12 @@ function directText(el: Element): string {
 
 onmessage = (e: MessageEvent) => {
   const m = e.data.pluginMessage; if (!m) return;
-  if (m.type === "done") status.textContent = `Imported ${m.count} layers ✓`;
-  if (m.type === "progress") status.textContent = `Building… ${m.done}/${m.total}`;
+  if (m.type === "progress") setStatus(`Building… ${m.done}/${m.total}`);
+  if (m.type === "done") {
+    let msg = `Imported ${m.count} layers ✓`;
+    if (m.missingFonts && m.missingFonts.length) {
+      msg += ` · ${m.missingFonts.length} font${m.missingFonts.length > 1 ? "s" : ""} fell back to Inter`;
+    }
+    setStatus(msg, true);
+  }
 };
