@@ -51,7 +51,7 @@ async function font(family: string, style: string): Promise<FontName> {
   const k = family + style;
   if (loaded.has(k)) return f;
   try { await figma.loadFontAsync(f); loaded.add(k); return f; }
-  catch { const fb: FontName = { family: "Inter", style: /bold/i.test(style) ? "Bold" : /medium/i.test(style) ? "Medium" : /semi/i.test(style) ? "Semi Bold" : "Regular" }; try { await figma.loadFontAsync(fb); } catch { fb.style = "Regular"; await figma.loadFontAsync(fb); } return fb; }
+  catch { let fb: FontName = { family: "Inter", style: /bold/i.test(style) ? "Bold" : /medium/i.test(style) ? "Medium" : /semi/i.test(style) ? "Semi Bold" : "Regular" }; try { await figma.loadFontAsync(fb); } catch { fb = { family: "Inter", style: "Regular" }; await figma.loadFontAsync(fb); } return fb; }
 }
 
 // ── 1. Create a UX kit from colors + font ──────────────────────────────────────

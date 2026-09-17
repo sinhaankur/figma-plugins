@@ -619,11 +619,11 @@
       loaded.add(k);
       return f;
     } catch {
-      const fb = { family: "Inter", style: /bold/i.test(style) ? "Bold" : /medium/i.test(style) ? "Medium" : /semi/i.test(style) ? "Semi Bold" : "Regular" };
+      let fb = { family: "Inter", style: /bold/i.test(style) ? "Bold" : /medium/i.test(style) ? "Medium" : /semi/i.test(style) ? "Semi Bold" : "Regular" };
       try {
         await figma.loadFontAsync(fb);
       } catch {
-        fb.style = "Regular";
+        fb = { family: "Inter", style: "Regular" };
         await figma.loadFontAsync(fb);
       }
       return fb;
